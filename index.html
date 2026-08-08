@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可视化无尽通用框架option</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Microsoft YaHei",sans-serif; background:#f0f2f5; padding:16px; color:#222; }
+.app { max-width:1600px; margin:0 auto; background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:20px 24px; }
+h1 { font-size:22px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+h1 small { font-size:14px; font-weight:400; color:#888; }
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+.btn { padding:6px 16px; border:none; border-radius:6px; font-size:13px; cursor:pointer; background:#e9ecf0; transition:background .2s; }
+.btn-primary { background:#2d7aff; color:#fff; }
+.btn-primary:hover { background:#1a5fd9; }
+.btn-success { background:#22a65e; color:#fff; }
+.btn-success:hover { background:#1a8a4d; }
+.btn-danger { background:#e5484d; color:#fff; }
+.btn-danger:hover { background:#c83a3f; }
+.flex-row { display:flex; gap:20px; flex-wrap:wrap; }
+.flex-col { flex:1; min-width:300px; }
+
+.panel { background:#f8f9fb; border-radius:10px; padding:12px 16px; margin-bottom:16px; }
+.panel-title { font-weight:600; font-size:14px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+
+.slot-remark { display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+.slot-remark .num { font-weight:700; color:#2d7aff; min-width:28px; }
+.slot-remark input { flex:1; padding:2px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:11px; background:#fff; }
+
+.op-section { margin-bottom:8px; }
+.op-section-title { font-size:12px; font-weight:600; color:#555; margin-bottom:4px; }
+.op-list { display:flex; flex-wrap:wrap; gap:4px; }
+.op-item { display:inline-flex; align-items:center; gap:4px; background:#eef2ff; border:2px solid transparent; border-radius:6px; padding:2px 8px; font-size:12px; cursor:grab; user-select:none; }
+.op-item:hover { background:#dbeafe; }
+.op-item.selected { border-color:#2d7aff; background:#bfdbfe; }
+.op-item.keyboard-selected { border-color:#2563eb; background:#dbeafe; box-shadow:0 0 0 2px rgba(37,99,235,0.3); }
+.op-item.dragging { opacity:0.4; }
+
+.switch-bar { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0; align-items:center; }
+.switch-bar .sw-item { display:flex; align-items:center; gap:4px; font-size:12px; background:#fff; border:1px solid #d0d7de; border-radius:6px; padding:2px 8px; cursor:pointer; user-select:none; }
+.switch-bar .sw-item.active { background:#e0f2fe; border-color:#7dd3fc; }
+.switch-bar .sw-item input[type="checkbox"] { margin:0; width:14px; height:14px; cursor:pointer; }
+.switch-bar .sw-item input:disabled { opacity:0.5; cursor:not-allowed; }
+.switch-bar .batch-mode { display:flex; align-items:center; gap:4px; font-size:12px; background:#fef3c7; border:1px solid #fcd34d; border-radius:6px; padding:2px 8px; }
+.switch-bar .batch-mode input { margin:0; width:14px; height:14px; cursor:pointer; }
+
+.coord-input { display:flex; align-items:center; gap:4px; font-size:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:2px 8px; margin-top:4px; }
+.coord-input label { white-space:nowrap; }
+.coord-input input { width:40px; padding:1px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:11px; text-align:center; }
+.coord-input input:disabled { background:#f3f4f6; color:#9ca3af; cursor:not-allowed; }
+.coord-input .disabled-hint { font-size:10px; color:#dc2626; margin-left:4px; }
+.coord-input input.error { border-color:#dc2626; background:#fee2e2; }
+
+.tabs { display:flex; gap:8px; margin-bottom:10px; }
+.tab { padding:6px 18px; border-radius:6px 6px 0 0; cursor:pointer; background:#e9ecf0; border-bottom:3px solid transparent; }
+.tab.active { background:#fff; border-bottom-color:#2d7aff; font-weight:600; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+#gridEarly, #gridLate { display:grid; gap:4px; }
+.cell { min-width:62px; min-height:62px; background:#fff; border:2px dashed #d0d7de; border-radius:6px;
+        padding:2px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:2px;
+        cursor:pointer; position:relative; transition:background .15s; }
+.cell.has { background:#f0f9ff; border-color:#7dd3fc; border-style:solid; }
+.cell .tag { font-size:9px; border-radius:3px; padding:0 4px; line-height:16px; white-space:nowrap; }
+.cell .tag.card { background:#bfdbfe; }
+.cell .tag.patch { background:#d1fae5; }
+.cell .tag.shovel { background:#e9d5ff; }
+.cell .tag.guard { background:#fde68a; }
+.cell .tag.feed { background:#fca5a5; }
+.cell .tag.bossfeed { background:#fca5a5; }
+.cell .tag.sweet { background:#fbcfe8; }
+.cell .tag.ganlan { background:#a7f3d0; }
+.cell .tag.magicfeed { background:#c4b5fd; }
+.cell .tag.bossflower { background:#fecaca; border:1px solid #ef4444; }
+.cell .tag.flower { background:#fde68a; border:1px solid #f59e0b; }
+.cell .tag.placeholder { background:#fef3c7; border:1px dashed #f59e0b; color:#b45309; }
+.cell .col-label { position:absolute; bottom:0; left:2px; font-size:7px; color:#bbb; font-weight:400; }
+.cell .row-label { position:absolute; bottom:0; right:2px; font-size:7px; color:#bbb; font-weight:400; }
+
+.option-tree { max-height:400px; overflow-y:auto; margin-top:6px; }
+.option-node { margin:4px 0 4px 16px; border-left:2px solid #e0e4ea; padding-left:12px; }
+.option-node-root { border-left:none; padding-left:0; }
+.option-item { display:flex; align-items:center; gap:8px; padding:4px 8px; background:#f8f9fb; border-radius:6px; margin:2px 0; flex-wrap:wrap; }
+.option-item .label { font-weight:500; min-width:100px; font-size:13px; }
+.option-item .control { flex:1; min-width:140px; }
+select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px solid #d0d7de; border-radius:4px; font-size:12px; background:#fff; width:100%; max-width:200px; }
+.switch-group { display:flex; gap:6px; align-items:center; }
+.switch-group label { font-size:12px; display:flex; align-items:center; gap:3px; cursor:pointer; }
+.checkbox-group { display:flex; flex-wrap:wrap; gap:4px; }
+.checkbox-group label { font-size:12px; display:flex; align-items:center; gap:3px; cursor:pointer; }
+.preview textarea { width:100%; height:350px; border:1px solid #d0d7de; border-radius:8px; padding:10px; font-family:Consolas,monospace; font-size:11px; resize:vertical; background:#fafbfc; }
+.status { margin-top:6px; font-size:13px; color:#22a65e; }
+.shortcut-hint { font-size:12px; color:#555; background:#f3f4f6; padding:4px 8px; border-radius:4px; margin-top:4px; }
+.right-controls { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb; }
+.right-controls .ctrl-item { display:flex; align-items:center; gap:4px; font-size:13px; background:#fff; border:1px solid #d0d7de; border-radius:6px; padding:2px 10px; }
+.right-controls .ctrl-item input[type="checkbox"] { margin:0; width:16px; height:16px; cursor:pointer; }
+.right-controls .ctrl-item input:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* Tooltip 样式 */
+.tooltip-box {
+    position: fixed;
+    background: #1e293b;
+    color: #f1f5f9;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    max-width: 320px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    line-height: 1.4;
+    border: 1px solid #475569;
+    font-weight: 400;
+}
+.tooltip-box.visible {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+<!-- Tooltip 容器 -->
+<div id="tooltip" class="tooltip-box"></div>
+
+<div class="app">
+    <h1>🧩 无尽通用框架-可视化编辑界面</h1>
+    <div class="toolbar">
+        <label>配置名称 <input type="text" id="configName" value="无尽_前后期" style="width:140px;" data-tooltip="JSON 中的 InstanceName 字段"></label>
+        <label>文件名 <input type="text" id="fileName" value="无尽_前后期" style="width:140px;" data-tooltip="下载的文件名（不含 .json）"></label>
+        <label>控制器 <input type="text" id="controllerName" value="安卓端" style="width:100px;" data-tooltip="控制器名称，对应 CurrentControllerName"></label>
+        <label>资源 <input type="text" id="resourceName" value="PVZ_2_国服通用" style="width:120px;" data-tooltip="资源名称（当前强制为空）"></label>
+        <label>入口 <input type="text" id="taskEntry" value="无尽挑战_前置检查" style="width:140px;" data-tooltip="任务入口节点"></label>
+        <button class="btn btn-primary" id="exportBtn" data-tooltip="导出配置为 JSON 文件">📥 导出 JSON</button>
+        <button class="btn btn-success" id="loadDefaultBtn" data-tooltip="重置所有配置到默认状态">↺ 默认选项</button>
+        <button class="btn" id="copyBtn" data-tooltip="复制预览区 JSON 到剪贴板">📋 复制</button>
+    </div>
+
+    <div class="flex-row">
+        <div class="flex-col" style="max-width:380px;">
+            <div class="panel" id="remarkPanel">
+                <div class="panel-title">📝 卡槽备注</div>
+                <div id="slotRemarks"></div>
+            </div>
+
+            <div class="panel" id="opPanel">
+                <div class="panel-title">📦 布阵操作（拖拽即布置，开关自动控制）</div>
+                <div id="opEarlySection" class="op-section">
+                    <div class="op-section-title">前期 · 卡槽种植</div>
+                    <div class="op-list" id="opEarlyCards"></div>
+                    <div class="op-section-title" style="margin-top:6px;">前期 · 守卫菇</div>
+                    <div class="op-list" id="opEarlyGuard"></div>
+                    <div class="op-section-title" style="margin-top:6px;">前期 · 守卫菇前铲子（铲1~5）</div>
+                    <div class="op-list" id="opEarlyShovelBefore"></div>
+                    <div class="op-section-title" style="margin-top:6px;">前期 · 守卫菇后铲子（铲6~10）</div>
+                    <div class="op-list" id="opEarlyShovelAfter"></div>
+                    <div class="op-section-title" style="margin-top:6px;">前期 · 小关喂豆</div>
+                    <div class="op-list" id="opEarlyFeed"></div>
+                    <div class="op-section-title" style="margin-top:6px;">前期 · Boss喂豆</div>
+                    <div class="op-list" id="opEarlyBossFeed"></div>
+                </div>
+                <div id="opLateSection" class="op-section" style="display:none;">
+                    <div class="op-section-title">后期 · 补植物</div>
+                    <div class="op-list" id="opLatePatch"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · 铲除</div>
+                    <div class="op-list" id="opLateShovel"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · 小关喂豆</div>
+                    <div class="op-list" id="opLateFeed"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · Boss喂豆</div>
+                    <div class="op-list" id="opLateBossFeed"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · 小关抛花</div>
+                    <div class="op-list" id="opLateFlower"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · Boss抛花</div>
+                    <div class="op-list" id="opLateBossFlower"></div>
+                    <div class="op-section-title" style="margin-top:6px;">后期 · 魔甘辅助</div>
+                    <div class="op-list" id="opLateMagic"></div>
+                </div>
+                <div style="font-size:11px;color:#888;margin-top:4px;">
+                    💡 点击操作项选中，再点击棋盘格子放置；拖拽同样可用。<br>
+                    ⌨️ WASD 移动选择操作项，右键取消格子。
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⚡ 快捷开关 &amp; 批量放置</div>
+                <div class="switch-bar">
+                    <div class="batch-mode" data-tooltip="开启后连续放置同种操作，直到取消选中">
+                        <input type="checkbox" id="batchMode" checked> <label for="batchMode">批量放置</label>
+                    </div>
+                </div>
+                <div id="quickSwitchContainer" style="margin-top:6px;"></div>
+            </div>
+
+            <div class="panel" style="max-height:400px;overflow-y:auto;">
+                <div class="panel-title">⚙️ 无尽选项</div>
+                <div id="optionTree" class="option-tree"></div>
+            </div>
+        </div>
+
+        <div class="flex-col" style="min-width:420px;">
+            <div class="panel">
+                <div class="panel-title">🎯 布阵棋盘</div>
+                <div class="tabs" id="tabHeaders">
+                    <div class="tab active" data-tab="early" data-tooltip="切换到前期棋盘（使用AD快捷切换）">前期</div>
+                    <div class="tab" data-tab="late" data-tooltip="切换到后期棋盘（使用AD快捷切换）">后期</div>
+                </div>
+                <div class="tab-content active" id="tabEarly">
+                    <div id="gridEarly"></div>
+                </div>
+                <div class="tab-content" id="tabLate">
+                    <div id="gridLate"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:13px;">
+                    <label>列数 <input type="number" id="colN" value="9" min="1" max="9" style="width:50px;" data-tooltip="调整棋盘列数（1~9）"></label>
+                    <label>行数 <input type="number" id="rowN" value="5" min="1" max="5" style="width:50px;" data-tooltip="调整棋盘行数（1~5）"></label>
+                    <button id="btnResize" class="btn" data-tooltip="应用新的棋盘尺寸">应用</button>
+                    <button id="btnClearEarly" class="btn btn-danger" data-tooltip="清空前期棋盘所有操作">重置前期</button>
+                    <button id="btnClearLate" class="btn btn-danger" data-tooltip="清空后期棋盘所有操作">重置后期</button>
+                </div>
+                <div class="shortcut-hint">
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px 10px;background:#fef3c7;border-radius:6px;border:1px solid #fcd34d;">
+                        <label style="font-weight:600;font-size:13px;">⏩ 前期转后期（第几关布好阵）:</label>
+                        <input type="text" id="customReturnLate" placeholder="关卡数" style="width:70px;padding:2px 4px;border:1px solid #d0d7de;border-radius:4px;font-size:13px;" data-tooltip="输入1~149且非5的倍数，脚本将在该关卡转为后期布局">
+                        <span style="font-size:11px;color:#888;">（1~149，非5的倍数）</span>
+                    </div>
+                    ⌨️ W/S 选操作 &nbsp; A/D 切换前后期 &nbsp; 🖱️ 右键取消格子
+                </div>
+                <!-- 右侧快速控制 -->
+                <div class="right-controls" id="rightQuickControls"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;">📄 预览</span>
+        </div>
+        <textarea id="previewText" readonly></textarea>
+        <div id="statusMsg" class="status"></div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// 1. OPTION_DEFS（完整定义）
+// ============================================================
+if (typeof OPTION_DEFS === 'undefined') {
+    window.OPTION_DEFS = {
+        "无尽模式": {
+            type: "select",
+            cases: [
+                { name: "预设模式", option: ["当期无尽模式"] },
+                { name: "无尽通用框架", option: [
+                    "当期无尽模式", "无尽全自动循环", "小关是否喂豆", "是否抛花",
+                    "fw_boss关是否需要喂豆", "从boss关选卡界面开启", "是否需要补植物",
+                    "小关是否加速", "fw_boss关是否加速", "fw_boss_补给智能选取",
+                    "fw_boss_是否开相机神器", "刷掉僵尸", "是否魔甘收尾(牢玩家专属)",
+                    "自定义布阵"
+                ] }
+            ]
+        },
+        "自定义布阵": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [
+                    "frame_wj_custom_从boss关选卡界面开始",
+                    "frame_wj_custom_回到后期",
+                    "frame_wj_custom_是否种守卫菇",
+                    "frame_wj_custom_布完阵是否喂豆",
+                    "frame_wj_custom_boss关是否喂豆",
+                    "frame_wj_custom_是否使用铲子1",
+                    "frame_wj_custom_是否使用铲子2",
+                    "卡1种植", "卡2种植", "卡3种植", "卡4种植", "卡5种植",
+                    "卡6种植", "卡7种植", "卡8种植"
+                ] }
+            ]
+        },
+        "是否需要补植物": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [
+                    "卡槽2_补植物", "卡槽3_补植物", "卡槽4_补植物", "卡槽5_补植物",
+                    "铲除植物"
+                ] }
+            ]
+        },
+        "铲除植物": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [
+                    "铲除植物1", "铲除植物2", "铲除植物3", "铲除植物4", "铲除植物5"
+                ] }
+            ]
+        },
+        "是否抛花": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "小关是否抛花",
+                        "boss关是否抛花",
+                        "识别能量花卡槽位置"
+                    ]
+                }
+            ]
+        },
+        "小关是否抛花": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: ["1花位置", "2花位置"] }
+            ]
+        },
+        "boss关是否抛花": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [
+                    "boss关_1花位置", "boss关_2花位置", "boss关_3花位置", "boss关_4花位置"
+                ] }
+            ]
+        },
+        "1花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"1"}] },
+        "2花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"2"}] },
+        "boss关_1花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"2"}] },
+        "boss关_2花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"3"}] },
+        "boss关_3花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"4"}] },
+        "boss关_4花位置": { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"5"}] },
+        "识别能量花卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "识别魔甘卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "识别三叶草卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        
+        // ========== 小关喂豆 ==========
+        "小关是否喂豆": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "是否开局喂豆球果",
+                        "小关喂豆位置",
+                        "小关喂豆间隔"
+                    ]
+                }
+            ]
+        },
+        // ========== Boss关喂豆 ==========
+        "fw_boss关是否需要喂豆": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "fw_boss关喂豆位置",
+                        "fw_boss关喂豆间隔"
+                    ]
+                }
+            ]
+        },
+        // ========== 守卫菇 & 铲子 ==========
+        "frame_wj_custom_是否种守卫菇": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "frame_wj_custom_种守卫菇位置1",
+                        "frame_wj_custom_种守卫菇位置2",
+                        "frame_wj_custom_种守卫菇位置3",
+                        "frame_wj_custom_种守卫菇位置4",
+                        "frame_wj_custom_种守卫菇位置5"
+                    ]
+                }
+            ]
+        },
+        "frame_wj_custom_是否使用铲子1": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "frame_wj_custom_使用铲子1",
+                        "frame_wj_custom_使用铲子2",
+                        "frame_wj_custom_使用铲子3",
+                        "frame_wj_custom_使用铲子4",
+                        "frame_wj_custom_使用铲子5"
+                    ]
+                }
+            ]
+        },
+        "frame_wj_custom_是否使用铲子2": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "frame_wj_custom_使用铲子6",
+                        "frame_wj_custom_使用铲子7",
+                        "frame_wj_custom_使用铲子8",
+                        "frame_wj_custom_使用铲子9",
+                        "frame_wj_custom_使用铲子10"
+                    ]
+                }
+            ]
+        },
+        // ========== 魔甘收尾 ==========
+        "是否魔甘收尾(牢玩家专属)": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "多少秒后种魔甘",
+                        "使用三叶草",
+                        "魔甘高级选项"
+                    ]
+                }
+            ]
+        },
+        "魔甘高级选项": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                {
+                    name: "Yes",
+                    option: [
+                        "识别魔甘卡槽位置",
+                        "魔甘前使用能量豆",
+                        "甜薯1种植位置",
+                        "甜薯2种植位置",
+                        "飓风甘蓝1种植位置",
+                        "飓风甘蓝2种植位置",
+                        "魔甘失败后是否重开"
+                    ]
+                }
+            ]
+        },
+        "魔甘前使用能量豆": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: ["魔甘前喂豆位置"] }
+            ]
+        },
+        "使用三叶草": {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: ["识别三叶草卡槽位置"] }
+            ]
+        },
+        // ==========================================
+
+        "小关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "从boss关选卡界面开启": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "fw_boss关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "fw_boss_补给智能选取": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "fw_boss_是否开相机神器": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "刷掉僵尸": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "无尽全自动循环": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "frame_wj_custom_从boss关选卡界面开始": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "frame_wj_custom_回到后期": { type: "input", inputs: [{name:"关卡",default:"3"}] },
+        "frame_wj_custom_布完阵是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "frame_wj_custom_boss关是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+    };
+    // 动态生成所有子选项
+    for (let s=1; s<=8; s++) {
+        const prefix = `卡${s}`;
+        OPTION_DEFS[`${prefix}种植`] = {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: Array.from({length:10}, (_,i) => `${prefix}种第${i+1}次`) }
+            ]
+        };
+        for (let i=1; i<=10; i++) {
+            const name = `${prefix}种第${i}次`;
+            OPTION_DEFS[name] = {
+                type: "switch",
+                cases: [
+                    { name: "No" },
+                    { name: "Yes", option: [`${name}坐标`] }
+                ]
+            };
+            OPTION_DEFS[`${name}坐标`] = {
+                type: "input",
+                inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+            };
+        }
+    }
+    for (let slot=2; slot<=5; slot++) {
+        const switchName = `卡槽${slot}_补植物`;
+        OPTION_DEFS[switchName] = {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [`卡槽${slot}_1`,`卡槽${slot}_2`,`卡槽${slot}_3`,`卡槽${slot}_4`,`卡槽${slot}_5`] }
+            ]
+        };
+        for (let pos=1; pos<=5; pos++) {
+            const name = `卡槽${slot}_${pos}`;
+            OPTION_DEFS[name] = {
+                type: "switch",
+                cases: [
+                    { name: "No" },
+                    { name: "Yes", option: [`${name}坐标`] }
+                ]
+            };
+            OPTION_DEFS[`${name}坐标`] = {
+                type: "input",
+                inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+            };
+        }
+    }
+    for (let i=1; i<=5; i++) {
+        const name = `铲除植物${i}`;
+        OPTION_DEFS[name] = {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [`${name}坐标`] }
+            ]
+        };
+        OPTION_DEFS[`${name}坐标`] = {
+            type: "input",
+            inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+        };
+    }
+    for (let i=1; i<=5; i++) {
+        const name = `frame_wj_custom_种守卫菇位置${i}`;
+        OPTION_DEFS[name] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:[`${name}坐标`]}] };
+        OPTION_DEFS[`${name}坐标`] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+    }
+    for (let i=1; i<=10; i++) {
+        const name = `frame_wj_custom_使用铲子${i}`;
+        OPTION_DEFS[name] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:[`${name}坐标`]}] };
+        OPTION_DEFS[`${name}坐标`] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+    }
+    OPTION_DEFS['frame_wj_custom_喂豆位置'] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:['frame_wj_custom_喂豆位置坐标']}] };
+    OPTION_DEFS['frame_wj_custom_喂豆位置坐标'] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+    OPTION_DEFS['frame_wj_boss_custom_喂豆位置'] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:['frame_wj_boss_custom_喂豆位置坐标']}] };
+    OPTION_DEFS['frame_wj_boss_custom_喂豆位置坐标'] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+    // 魔甘相关输入定义
+    OPTION_DEFS['甜薯1种植位置'] = { type: "input", inputs: [{name:"列",default:"8"},{name:"行",default:"2"}] };
+    OPTION_DEFS['甜薯2种植位置'] = { type: "input", inputs: [{name:"列",default:"8"},{name:"行",default:"4"}] };
+    OPTION_DEFS['飓风甘蓝1种植位置'] = { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"2"}] };
+    OPTION_DEFS['飓风甘蓝2种植位置'] = { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"4"}] };
+    OPTION_DEFS['魔甘前喂豆位置'] = { type: "input", inputs: [{name:"列",default:"3"},{name:"行",default:"3"}] };
+    OPTION_DEFS['多少秒后种魔甘'] = { type: "input", inputs: [{name:"秒",default:"15"}] };
+    OPTION_DEFS['魔甘失败后是否重开'] = { type: "switch", cases: [{name:"Yes"},{name:"No"}] };
+    // 喂豆相关输入
+    OPTION_DEFS['小关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
+    OPTION_DEFS['fw_boss关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
+    OPTION_DEFS['fw_boss关喂豆间隔'] = { type: "input", inputs: [{ name: "秒", default: "4" }] };
+    OPTION_DEFS['是否开局喂豆球果'] = { type: "select", cases: [{name:"否"},{name:"5-3"},{name:"4-3"},{name:"3-3"},{name:"2-3"},{name:"1-3"},{name:"4-2"},{name:"3-2"},{name:"2-2"},{name:"1-2"},{name:"4-4"},{name:"3-4"},{name:"2-4"},{name:"1-4"}] };
+    OPTION_DEFS['小关喂豆间隔'] = { type: "select", cases: [{name:"4秒"},{name:"5秒"},{name:"8秒"},{name:"16秒"},{name:"24秒"},{name:"32秒"},{name:"40秒"},{name:"60秒"},{name:"80秒"},{name:"100秒"}] };
+    // 其他
+    OPTION_DEFS['当期无尽模式'] = { type: "select", cases: [{ name: "神秘埃及", option: ["植物配置"] }] };
+    OPTION_DEFS['植物配置'] = { type: "select", cases: [{ name: "原大桑葚", option: ["原大_小关是否抛花","原大_boss关是否需要喂豆","原大_是否需要补植物"] }] };
+    OPTION_DEFS['原大_小关是否抛花'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
+    OPTION_DEFS['原大_boss关是否需要喂豆'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
+    OPTION_DEFS['原大_是否需要补植物'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
+    OPTION_DEFS['刷新僵尸的类别'] = { type: "checkbox", cases: [{name:"霹雳舞僵尸"}] };
+}
+
+// ============================================================
+// 2. Tooltip 系统
+// ============================================================
+const tooltipEl = document.getElementById('tooltip');
+let tooltipTimer = null;
+let tooltipTarget = null;
+
+function showTooltip(text, x, y) {
+    tooltipEl.textContent = text;
+    tooltipEl.style.left = (x + 12) + 'px';
+    tooltipEl.style.top = (y + 8) + 'px';
+    tooltipEl.classList.add('visible');
+}
+
+function hideTooltip() {
+    tooltipEl.classList.remove('visible');
+}
+
+function handleMouseEnter(e) {
+    const target = e.currentTarget;
+    const text = target.getAttribute('data-tooltip');
+    if (!text) return;
+    tooltipTarget = target;
+    clearTimeout(tooltipTimer);
+    const delay = parseInt(target.getAttribute('data-tooltip-delay')) || 500;
+    tooltipTimer = setTimeout(() => {
+        const rect = target.getBoundingClientRect();
+        showTooltip(text, rect.left, rect.top);
+    }, delay);
+}
+
+function handleMouseLeave(e) {
+    clearTimeout(tooltipTimer);
+    hideTooltip();
+    tooltipTarget = null;
+}
+
+function handleMouseMove(e) {
+    if (tooltipTarget && tooltipEl.classList.contains('visible')) {
+        // 跟随鼠标移动
+        tooltipEl.style.left = (e.clientX + 12) + 'px';
+        tooltipEl.style.top = (e.clientY + 8) + 'px';
+    }
+}
+
+// 对指定元素启用 tooltip
+function enableTooltip(el) {
+    if (!el || el._tooltipEnabled) return;
+    el.addEventListener('mouseenter', handleMouseEnter);
+    el.addEventListener('mouseleave', handleMouseLeave);
+    el.addEventListener('mousemove', handleMouseMove);
+    el._tooltipEnabled = true;
+}
+
+// 批量启用
+function enableTooltips(selector) {
+    document.querySelectorAll(selector).forEach(el => enableTooltip(el));
+}
+
+// 动态启用：在元素加入 DOM 后调用
+function observeNewElements() {
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType === 1) {
+                    // 检查自身是否有 data-tooltip
+                    if (node.hasAttribute && node.hasAttribute('data-tooltip')) {
+                        enableTooltip(node);
+                    }
+                    // 检查后代
+                    node.querySelectorAll && node.querySelectorAll('[data-tooltip]').forEach(el => enableTooltip(el));
+                }
+            }
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// ============================================================
+// 3. 卡槽备注
+// ============================================================
+let slotRemarks = Array(8).fill('');
+function renderSlotRemarks() {
+    const container = document.getElementById('slotRemarks');
+    container.innerHTML = '';
+    for (let i=0; i<8; i++) {
+        const div = document.createElement('div');
+        div.className = 'slot-remark';
+        const num = document.createElement('span');
+        num.className = 'num';
+        num.textContent = `卡${i+1}`;
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = '备注';
+        inp.value = slotRemarks[i] || '';
+        inp.setAttribute('data-tooltip', `为卡槽${i+1}添加备注，将显示在对应卡槽操作项旁`);
+        inp.addEventListener('input', function() {
+            slotRemarks[i] = this.value.trim();
+            updatePreview();
+        });
+        div.appendChild(num);
+        div.appendChild(inp);
+        container.appendChild(div);
+        enableTooltip(inp);
+    }
+}
+
+// ============================================================
+// 4. 操作项定义
+// ============================================================
+const EARLY_CARDS = [];
+for (let i=1; i<=8; i++) EARLY_CARDS.push({ id: `card${i}`, label: `卡${i}`, type: 'card', phase: 'early', single: false, maxCount: 10 });
+const EARLY_GUARD = [ { id: 'guard', label: '守卫菇', type: 'guard', phase: 'early', single: false, maxCount: 5 } ];
+const EARLY_SHOVEL_BEFORE = [ { id: 'shovel_before', label: '铲子(前5)', type: 'shovel', phase: 'early', single: false, maxCount: 5 } ];
+const EARLY_SHOVEL_AFTER = [ { id: 'shovel_after', label: '铲子(后5)', type: 'shovel', phase: 'early', single: false, maxCount: 5 } ];
+const EARLY_FEED = [ { id: 'feed', label: '小关喂豆', type: 'feed', phase: 'early', single: true } ];
+const EARLY_BOSS_FEED = [ { id: 'bossfeed', label: 'Boss喂豆', type: 'bossfeed', phase: 'early', single: true } ];
+
+const LATE_PATCH = [];
+for (let slot=2; slot<=5; slot++) LATE_PATCH.push({ id: `patch_slot${slot}`, label: `补卡${slot}`, type: 'patch', phase: 'late', single: false, maxCount: 5, slot });
+const LATE_SHOVEL = [ { id: 'shovel_late', label: '铲除', type: 'shovel', phase: 'late', single: false, maxCount: 5 } ];
+const LATE_FEED = [ { id: 'feed_late', label: '小关喂豆', type: 'feed', phase: 'late', single: true } ];
+const LATE_BOSS_FEED = [ { id: 'bossfeed_late', label: 'Boss喂豆', type: 'bossfeed', phase: 'late', single: true } ];
+const LATE_FLOWER = [ { id: 'flower', label: '小关抛花', type: 'flower', phase: 'late', single: false, maxCount: 2 } ];
+const LATE_BOSS_FLOWER = [ { id: 'bossflower', label: 'Boss抛花', type: 'bossflower', phase: 'late', single: false, maxCount: 4 } ];
+const LATE_MAGIC = [
+    { id: 'sweet1', label: '甜薯1', type: 'sweet', phase: 'late', single: true },
+    { id: 'sweet2', label: '甜薯2', type: 'sweet', phase: 'late', single: true },
+    { id: 'ganlan1', label: '甘蓝1', type: 'ganlan', phase: 'late', single: true },
+    { id: 'ganlan2', label: '甘蓝2', type: 'ganlan', phase: 'late', single: true },
+    { id: 'magicfeed', label: '魔甘前喂豆', type: 'magicfeed', phase: 'late', single: true }
+];
+
+const ALL_OPS = [...EARLY_CARDS, ...EARLY_GUARD, ...EARLY_SHOVEL_BEFORE, ...EARLY_SHOVEL_AFTER, ...EARLY_FEED, ...EARLY_BOSS_FEED, ...LATE_PATCH, ...LATE_SHOVEL, ...LATE_FEED, ...LATE_BOSS_FEED, ...LATE_FLOWER, ...LATE_BOSS_FLOWER, ...LATE_MAGIC];
+
+let selectedOp = null;
+let isBatchMode = true;
+
+// --- WASD 导航相关 ---
+let opItemsList = [];
+let keyboardSelectedIndex = -1;
+
+function getVisibleOpItems() {
+    const container = document.getElementById('opPanel');
+    const items = container.querySelectorAll('.op-item');
+    const visible = [];
+    items.forEach(el => {
+        let parent = el.closest('.op-section');
+        if (parent && parent.style.display !== 'none') {
+            visible.push(el);
+        }
+    });
+    return visible;
+}
+
+function updateKeyboardSelection() {
+    document.querySelectorAll('.op-item').forEach(el => {
+        el.classList.remove('keyboard-selected');
+    });
+    if (keyboardSelectedIndex >= 0 && keyboardSelectedIndex < opItemsList.length) {
+        const el = opItemsList[keyboardSelectedIndex];
+        el.classList.add('keyboard-selected');
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        const opId = el.dataset.id;
+        const op = ALL_OPS.find(o => o.id === opId);
+        if (op) {
+            if (!selectedOp || selectedOp.id !== opId) {
+                setSelected(op);
+                updateSelectedUI();
+            }
+        }
+    }
+}
+
+function moveKeyboardSelection(delta) {
+    opItemsList = getVisibleOpItems();
+    if (opItemsList.length === 0) {
+        keyboardSelectedIndex = -1;
+        updateKeyboardSelection();
+        return;
+    }
+    if (keyboardSelectedIndex < 0 || keyboardSelectedIndex >= opItemsList.length) {
+        keyboardSelectedIndex = delta > 0 ? 0 : opItemsList.length - 1;
+    } else {
+        keyboardSelectedIndex += delta;
+        if (keyboardSelectedIndex < 0) keyboardSelectedIndex = opItemsList.length - 1;
+        if (keyboardSelectedIndex >= opItemsList.length) keyboardSelectedIndex = 0;
+    }
+    updateKeyboardSelection();
+}
+
+function resetKeyboardNavigation() {
+    opItemsList = getVisibleOpItems();
+    if (selectedOp) {
+        const foundIdx = opItemsList.findIndex(el => el.dataset.id === selectedOp.id);
+        if (foundIdx >= 0) keyboardSelectedIndex = foundIdx;
+        else keyboardSelectedIndex = opItemsList.length > 0 ? 0 : -1;
+    } else {
+        keyboardSelectedIndex = opItemsList.length > 0 ? 0 : -1;
+    }
+    updateKeyboardSelection();
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+    const key = e.key.toLowerCase();
+    if (key === 'w' || key === 'arrowup') {
+        e.preventDefault();
+        moveKeyboardSelection(-1);
+        return;
+    }
+    if (key === 's' || key === 'arrowdown') {
+        e.preventDefault();
+        moveKeyboardSelection(1);
+        return;
+    }
+    if (key === 'a' || key === 'arrowleft') {
+        e.preventDefault();
+        const tabEarly = document.querySelector('.tab[data-tab="early"]');
+        if (tabEarly && !tabEarly.classList.contains('active')) {
+            tabEarly.click();
+            setTimeout(() => resetKeyboardNavigation(), 50);
+        }
+        return;
+    }
+    if (key === 'd' || key === 'arrowright') {
+        e.preventDefault();
+        const tabLate = document.querySelector('.tab[data-tab="late"]');
+        if (tabLate && !tabLate.classList.contains('active')) {
+            tabLate.click();
+            setTimeout(() => resetKeyboardNavigation(), 50);
+        }
+        return;
+    }
+    if (key === 'enter' || key === ' ') {
+        e.preventDefault();
+        if (selectedOp) {
+            clearSelected();
+            updateSelectedUI();
+        }
+        return;
+    }
+});
+
+// ============================================================
+// 5. 渲染操作项
+// ============================================================
+function renderOps(phase) {
+    const earlyCards = document.getElementById('opEarlyCards');
+    const earlyGuard = document.getElementById('opEarlyGuard');
+    const earlyShovelBefore = document.getElementById('opEarlyShovelBefore');
+    const earlyShovelAfter = document.getElementById('opEarlyShovelAfter');
+    const earlyFeed = document.getElementById('opEarlyFeed');
+    const earlyBossFeed = document.getElementById('opEarlyBossFeed');
+    const latePatch = document.getElementById('opLatePatch');
+    const lateShovel = document.getElementById('opLateShovel');
+    const lateFeed = document.getElementById('opLateFeed');
+    const lateBossFeed = document.getElementById('opLateBossFeed');
+    const lateFlower = document.getElementById('opLateFlower');
+    const lateBossFlower = document.getElementById('opLateBossFlower');
+    const lateMagic = document.getElementById('opLateMagic');
+
+    earlyCards.innerHTML = ''; earlyGuard.innerHTML = ''; earlyShovelBefore.innerHTML = ''; earlyShovelAfter.innerHTML = '';
+    earlyFeed.innerHTML = ''; earlyBossFeed.innerHTML = '';
+    latePatch.innerHTML = ''; lateShovel.innerHTML = ''; lateFeed.innerHTML = ''; lateBossFeed.innerHTML = '';
+    lateFlower.innerHTML = ''; lateBossFlower.innerHTML = ''; lateMagic.innerHTML = '';
+
+    document.getElementById('opEarlySection').style.display = (phase === 'early') ? 'block' : 'none';
+    document.getElementById('opLateSection').style.display = (phase === 'late') ? 'block' : 'none';
+
+    EARLY_CARDS.forEach(op => { const el = createOpElement(op); earlyCards.appendChild(el); });
+    EARLY_GUARD.forEach(op => { const el = createOpElement(op); earlyGuard.appendChild(el); });
+    EARLY_SHOVEL_BEFORE.forEach(op => { const el = createOpElement(op); earlyShovelBefore.appendChild(el); });
+    EARLY_SHOVEL_AFTER.forEach(op => { const el = createOpElement(op); earlyShovelAfter.appendChild(el); });
+    EARLY_FEED.forEach(op => { const el = createOpElement(op); earlyFeed.appendChild(el); });
+    EARLY_BOSS_FEED.forEach(op => { const el = createOpElement(op); earlyBossFeed.appendChild(el); });
+    LATE_PATCH.forEach(op => { const el = createOpElement(op); latePatch.appendChild(el); });
+    LATE_SHOVEL.forEach(op => { const el = createOpElement(op); lateShovel.appendChild(el); });
+    LATE_FEED.forEach(op => { const el = createOpElement(op); lateFeed.appendChild(el); });
+    LATE_BOSS_FEED.forEach(op => { const el = createOpElement(op); lateBossFeed.appendChild(el); });
+    LATE_FLOWER.forEach(op => { const el = createOpElement(op); lateFlower.appendChild(el); });
+    LATE_BOSS_FLOWER.forEach(op => { const el = createOpElement(op); lateBossFlower.appendChild(el); });
+    LATE_MAGIC.forEach(op => { const el = createOpElement(op); lateMagic.appendChild(el); });
+    
+    clearSelected();
+    updateSelectedUI();
+    setTimeout(() => resetKeyboardNavigation(), 50);
+}
+
+function createOpElement(op) {
+    const div = document.createElement('div');
+    div.className = 'op-item';
+    div.draggable = true;
+    div.dataset.id = op.id;
+    let labelText = op.label;
+    if (op.type === 'card') {
+        const idx = parseInt(op.id.replace('card','')) - 1;
+        const remark = slotRemarks[idx] || '';
+        labelText = op.label + (remark ? `(${remark})` : '');
+    }
+    div.textContent = labelText;
+    // 设置提示
+    let tip = '';
+    if (op.type === 'card') tip = `点击或拖拽放置卡${op.id.replace('card','')}，最多${op.maxCount}次`;
+    else if (op.type === 'guard') tip = '种植守卫菇，最多5次，种完喂豆后铲掉';
+    else if (op.type === 'shovel' && op.id === 'shovel_before') tip = '铲除过渡植物（前5次）';
+    else if (op.type === 'shovel' && op.id === 'shovel_after') tip = '铲除守卫菇（后5次）';
+    else if (op.type === 'feed' || op.type === 'bossfeed') tip = '在指定位置循环喂能量豆';
+    else if (op.type === 'patch') tip = `补种卡槽${op.slot}的植物，最多5次`;
+    else if (op.type === 'flower') tip = '抛花收集能量豆，最多2次';
+    else if (op.type === 'bossflower') tip = 'Boss关抛花，最多4次';
+    else if (op.type === 'sweet') tip = '种植甜薯';
+    else if (op.type === 'ganlan') tip = '种植飓风甘蓝';
+    else if (op.type === 'magicfeed') tip = '魔甘前喂能量豆';
+    else tip = '点击或拖拽放置';
+    div.setAttribute('data-tooltip', tip);
+
+    div.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (selectedOp && selectedOp.id === op.id) {
+            clearSelected();
+        } else {
+            setSelected(op);
+            const idx = opItemsList.findIndex(el => el.dataset.id === op.id);
+            if (idx >= 0) {
+                keyboardSelectedIndex = idx;
+                updateKeyboardSelection();
+            }
+        }
+        updateSelectedUI();
+    });
+    div.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', 'op_' + op.id);
+        this.classList.add('dragging');
+    });
+    div.addEventListener('dragend', function(e) { this.classList.remove('dragging'); });
+    // 启用 tooltip
+    enableTooltip(div);
+    return div;
+}
+
+function setSelected(op) { selectedOp = op; updateSelectedUI(); }
+function clearSelected() { selectedOp = null; updateSelectedUI(); }
+function updateSelectedUI() {
+    document.querySelectorAll('.op-item').forEach(el => {
+        el.classList.toggle('selected', selectedOp && el.dataset.id === selectedOp.id);
+    });
+}
+
+// ============================================================
+// 6. 快捷开关（左侧）
+// ============================================================
+const SWITCH_GROUPS = {
+    early: {
+        switches: [
+            { optionName: '小关是否喂豆', label: '小关喂豆' },
+            { optionName: 'fw_boss关是否需要喂豆', label: 'Boss喂豆' },
+            { optionName: '小关是否加速', label: '小关加速' },
+            { optionName: 'fw_boss关是否加速', label: 'Boss加速' },
+            { optionName: '从boss关选卡界面开启', label: 'boss选卡开始' },
+            { optionName: 'frame_wj_custom_是否种守卫菇', label: '守卫菇启用', default: 0 },
+            { optionName: 'frame_wj_custom_是否使用铲子1', label: '守卫菇前铲子', default: 0 },
+            { optionName: 'frame_wj_custom_是否使用铲子2', label: '守卫菇后铲子', default: 0 },
+        ],
+        coords: [
+            { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
+            { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
+        ]
+    },
+    late: {
+        switches: [
+            { optionName: '小关是否喂豆', label: '小关喂豆' },
+            { optionName: 'fw_boss关是否需要喂豆', label: 'Boss喂豆' },
+            { optionName: '小关是否加速', label: '小关加速' },
+            { optionName: 'fw_boss关是否加速', label: 'Boss加速' },
+            { optionName: '是否抛花', label: '是否抛花' },
+            { optionName: '小关是否抛花', label: '小关抛花', default: 0 },
+            { optionName: 'boss关是否抛花', label: 'Boss抛花', default: 0 },
+            { optionName: '是否魔甘收尾(牢玩家专属)', label: '魔甘收尾' },
+            { optionName: '使用三叶草', label: '使用三叶草', default: 0 },
+            { optionName: '铲除启用', label: '铲除启用', default: 0 },
+            { optionName: 'fw_boss_补给智能选取', label: '智能补给' },
+            { optionName: 'fw_boss_是否开相机神器', label: '相机神器' },
+            { optionName: '识别魔甘卡槽位置', label: '识别魔甘' },
+            { optionName: '识别三叶草卡槽位置', label: '识别三叶草' },
+            { optionName: '识别能量花卡槽位置', label: '识别能量花' },
+        ],
+        coords: [
+            { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
+            { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
+            { label: '魔甘前喂豆位置', optName: '魔甘前喂豆位置', depends: '是否魔甘收尾(牢玩家专属)' },
+        ]
+    }
+};
+
+// 联动规则
+const DEPENDENCY_RULES = {
+    '识别能量花卡槽位置': { parent: '是否抛花' },
+    '识别魔甘卡槽位置': { parent: '魔甘高级选项', grandparent: '是否魔甘收尾(牢玩家专属)' },
+    '识别三叶草卡槽位置': { parent: '使用三叶草', grandparent: '是否魔甘收尾(牢玩家专属)' },
+    '使用三叶草': { parent: '是否魔甘收尾(牢玩家专属)' }
+};
+
+function applyDependency(optionName, checked) {
+    const rule = DEPENDENCY_RULES[optionName];
+    if (!rule) return;
+    if (checked) {
+        if (rule.parent && currentValues[rule.parent]?.index !== 1) {
+            currentValues[rule.parent] = { index: 1 };
+        }
+        if (rule.grandparent && currentValues[rule.grandparent]?.index !== 1) {
+            currentValues[rule.grandparent] = { index: 1 };
+        }
+    }
+}
+
+function renderQuickSwitches(phase) {
+    const container = document.getElementById('quickSwitchContainer');
+    container.innerHTML = '';
+    const group = SWITCH_GROUPS[phase];
+    if (!group) return;
+    group.switches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'sw-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        if (currentValues[item.optionName] === undefined) currentValues[item.optionName] = { index: item.default || 0 };
+        cb.checked = (currentValues[item.optionName]?.index === 1) || false;
+        let disabled = false;
+        if (item.optionName === '识别能量花卡槽位置') {
+            disabled = (currentValues['是否抛花']?.index !== 1);
+        } else if (item.optionName === '识别魔甘卡槽位置') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+        } else if (item.optionName === '使用三叶草') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+        } else if (item.optionName === '识别三叶草卡槽位置') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1 || currentValues['使用三叶草']?.index !== 1);
+        }
+        cb.disabled = disabled;
+        cb.addEventListener('change', function() {
+            if (cb.disabled) return;
+            const newVal = this.checked ? 1 : 0;
+            applyDependency(item.optionName, this.checked);
+            currentValues[item.optionName] = { index: newVal };
+            const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+            renderQuickSwitches(currentTab);
+            updatePreview();
+            updateRightPanelSwitches();
+        });
+        const label = document.createElement('span');
+        label.textContent = item.label;
+        div.appendChild(cb);
+        div.appendChild(label);
+        container.appendChild(div);
+        // 提示
+        let tip = '';
+        if (item.optionName === '小关是否喂豆') tip = '开启后小关喂豆生效';
+        else if (item.optionName === 'fw_boss关是否需要喂豆') tip = '开启后Boss关喂豆生效';
+        else if (item.optionName === '小关是否加速') tip = '小关自动加速';
+        else if (item.optionName === 'fw_boss关是否加速') tip = 'Boss关自动加速';
+        else if (item.optionName === '从boss关选卡界面开启') tip = '从Boss选卡界面开始脚本';
+        else if (item.optionName === 'frame_wj_custom_是否种守卫菇') tip = '启用守卫菇种植';
+        else if (item.optionName === 'frame_wj_custom_是否使用铲子1') tip = '启用前5次铲子';
+        else if (item.optionName === 'frame_wj_custom_是否使用铲子2') tip = '启用后5次铲子';
+        else if (item.optionName === '是否抛花') tip = '开启抛花功能';
+        else if (item.optionName === '小关是否抛花') tip = '小关抛花';
+        else if (item.optionName === 'boss关是否抛花') tip = 'Boss关抛花';
+        else if (item.optionName === '是否魔甘收尾(牢玩家专属)') tip = '开启魔甘收尾（小关喂豆将失效）';
+        else if (item.optionName === '使用三叶草') tip = '魔甘时使用三叶草';
+        else if (item.optionName === '铲除启用') tip = '启用补植物中的铲除';
+        else if (item.optionName === 'fw_boss_补给智能选取') tip = '智能选取补给';
+        else if (item.optionName === 'fw_boss_是否开相机神器') tip = 'Boss关开启相机神器';
+        else if (item.optionName === '识别魔甘卡槽位置') tip = '自动识别魔甘卡槽';
+        else if (item.optionName === '识别三叶草卡槽位置') tip = '自动识别三叶草卡槽';
+        else if (item.optionName === '识别能量花卡槽位置') tip = '自动识别能量花卡槽';
+        else tip = `开关: ${item.label}`;
+        div.setAttribute('data-tooltip', tip);
+        enableTooltip(div);
+    });
+
+    group.coords.forEach(coord => {
+        const optName = coord.optName;
+        if (optName === 'frame_wj_custom_回到后期') {
+            const div = document.createElement('div');
+            div.className = 'coord-input';
+            const label = document.createElement('label');
+            label.textContent = coord.label + ':';
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.placeholder = '关卡数';
+            inp.value = currentValues[optName]?.data?.关卡 || '';
+            const regex = coord.regex || /.*/;
+            function validate() {
+                const v = inp.value.trim();
+                if (v === '') { inp.classList.remove('error'); return true; }
+                if (regex.test(v)) { inp.classList.remove('error'); return true; }
+                else { inp.classList.add('error'); document.getElementById('statusMsg').textContent = '⚠️ 请输入1~149中不是5的倍数的数'; return false; }
+            }
+            inp.addEventListener('input', function() {
+                const valid = validate();
+                if (valid) {
+                    if (!currentValues[optName]) currentValues[optName] = { data: {} };
+                    currentValues[optName].data.关卡 = this.value.trim();
+                    updatePreview();
+                }
+            });
+            inp.addEventListener('blur', validate);
+            div.appendChild(label);
+            div.appendChild(inp);
+            container.appendChild(div);
+            div.setAttribute('data-tooltip', '设置在第几关转为后期布局（1~149，非5的倍数）');
+            enableTooltip(div);
+            setTimeout(validate, 100);
+            return;
+        }
+
+        const def = OPTION_DEFS[optName];
+        if (!def || def.type !== 'input') return;
+        const inputs = def.inputs || [];
+        const colKey = inputs[0]?.name || '列';
+        const rowKey = inputs[1]?.name || '行';
+        let disabled = false, hint = '';
+        if (coord.depends) {
+            const depState = currentValues[coord.depends]?.index;
+            if (depState !== 1) { disabled = true; hint = `（请先开启“${coord.depends}”）`; }
+        }
+        const div = document.createElement('div');
+        div.className = 'coord-input';
+        const label = document.createElement('label');
+        label.textContent = coord.label + ':';
+        const colInput = document.createElement('input');
+        colInput.type = 'text';
+        colInput.placeholder = '列';
+        colInput.value = currentValues[optName]?.data?.[colKey] || '';
+        colInput.disabled = disabled;
+        const rowInput = document.createElement('input');
+        rowInput.type = 'text';
+        rowInput.placeholder = '行';
+        rowInput.value = currentValues[optName]?.data?.[rowKey] || '';
+        rowInput.disabled = disabled;
+        if (disabled) {
+            const hintSpan = document.createElement('span');
+            hintSpan.className = 'disabled-hint';
+            hintSpan.textContent = hint;
+            div.appendChild(label);
+            div.appendChild(colInput);
+            div.appendChild(document.createTextNode('-'));
+            div.appendChild(rowInput);
+            div.appendChild(hintSpan);
+        } else {
+            colInput.addEventListener('input', function() {
+                if (!currentValues[optName]) currentValues[optName] = { data: {} };
+                currentValues[optName].data[colKey] = this.value;
+                updatePreview();
+            });
+            rowInput.addEventListener('input', function() {
+                if (!currentValues[optName]) currentValues[optName] = { data: {} };
+                currentValues[optName].data[rowKey] = this.value;
+                updatePreview();
+            });
+            div.appendChild(label);
+            div.appendChild(colInput);
+            div.appendChild(document.createTextNode('-'));
+            div.appendChild(rowInput);
+        }
+        container.appendChild(div);
+        div.setAttribute('data-tooltip', `设置${coord.label}的坐标`);
+        enableTooltip(div);
+    });
+}
+
+document.getElementById('batchMode').addEventListener('change', function() { isBatchMode = this.checked; });
+
+// ============================================================
+// 7. 右侧快速控制
+// ============================================================
+const RIGHT_SWITCHES = [
+    { optionName: '是否抛花', label: '是否抛花' },
+    { optionName: '是否魔甘收尾(牢玩家专属)', label: '魔甘收尾' },
+    { optionName: '小关是否加速', label: '小关加速' },
+    { optionName: 'fw_boss关是否加速', label: 'Boss加速' },
+    { optionName: 'fw_boss_补给智能选取', label: '智能补给' },
+    { optionName: 'fw_boss_是否开相机神器', label: '相机神器' },
+    { optionName: '使用三叶草', label: '使用三叶草' },
+    { optionName: '识别魔甘卡槽位置', label: '识别魔甘' },
+    { optionName: '识别三叶草卡槽位置', label: '识别三叶草' },
+    { optionName: '识别能量花卡槽位置', label: '识别能量花' }
+];
+
+let rightCheckboxes = {};
+
+function renderRightPanelSwitches() {
+    const container = document.getElementById('rightQuickControls');
+    container.innerHTML = '';
+    RIGHT_SWITCHES.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'ctrl-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = 'right_' + item.optionName;
+        if (currentValues[item.optionName] === undefined) currentValues[item.optionName] = { index: 0 };
+        cb.checked = (currentValues[item.optionName]?.index === 1) || false;
+        let disabled = false;
+        if (item.optionName === '识别能量花卡槽位置') {
+            disabled = (currentValues['是否抛花']?.index !== 1);
+        } else if (item.optionName === '识别魔甘卡槽位置') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+        } else if (item.optionName === '使用三叶草') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+        } else if (item.optionName === '识别三叶草卡槽位置') {
+            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1 || currentValues['使用三叶草']?.index !== 1);
+        }
+        cb.disabled = disabled;
+        cb.addEventListener('change', function() {
+            if (cb.disabled) return;
+            const newVal = this.checked ? 1 : 0;
+            applyDependency(item.optionName, this.checked);
+            currentValues[item.optionName] = { index: newVal };
+            const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+            renderQuickSwitches(currentTab);
+            updatePreview();
+            renderRightPanelSwitches();
+        });
+        const label = document.createElement('label');
+        label.htmlFor = cb.id;
+        label.textContent = item.label;
+        div.appendChild(cb);
+        div.appendChild(label);
+        div.setAttribute('data-tooltip-delay', '1000');
+        container.appendChild(div);
+        // 提示与左侧相同
+        let tip = '';
+        if (item.optionName === '是否抛花') tip = '开启抛花功能';
+        else if (item.optionName === '是否魔甘收尾(牢玩家专属)') tip = '开启魔甘收尾（小关喂豆将失效）';
+        else if (item.optionName === '小关是否加速') tip = '小关自动加速';
+        else if (item.optionName === 'fw_boss关是否加速') tip = 'Boss关自动加速';
+        else if (item.optionName === 'fw_boss_补给智能选取') tip = '智能选取补给';
+        else if (item.optionName === 'fw_boss_是否开相机神器') tip = 'Boss关开启相机神器';
+        else if (item.optionName === '使用三叶草') tip = '魔甘时使用三叶草';
+        else if (item.optionName === '识别魔甘卡槽位置') tip = '自动识别魔甘卡槽';
+        else if (item.optionName === '识别三叶草卡槽位置') tip = '自动识别三叶草卡槽';
+        else if (item.optionName === '识别能量花卡槽位置') tip = '自动识别能量花卡槽';
+        else tip = `开关: ${item.label}`;
+        div.setAttribute('data-tooltip', tip);
+        enableTooltip(div);
+        rightCheckboxes[item.optionName] = cb;
+    });
+}
+
+function updateRightPanelSwitches() {
+    renderRightPanelSwitches();
+}
+
+// ============================================================
+// 8. 棋盘数据
+// ============================================================
+let cols = 9, rows = 5;
+let boardEarly = [], boardLate = [];
+
+function initBoards() {
+    boardEarly = Array.from({length: rows}, () => Array(cols).fill(null).map(() => []));
+    boardLate = Array.from({length: rows}, () => Array(cols).fill(null).map(() => []));
+}
+initBoards();
+
+function findOpInBoard(board, opId) {
+    for (let r=0; r<board.length; r++) for (let c=0; c<board[r].length; c++) {
+        const idx = board[r][c].findIndex(item => item.id === opId);
+        if (idx !== -1) return { r, c, idx };
+    }
+    return null;
+}
+function countOpInBoard(board, opId) {
+    let cnt = 0;
+    for (let r=0; r<board.length; r++) for (let c=0; c<board[r].length; c++) cnt += board[r][c].filter(item => item.id === opId).length;
+    return cnt;
+}
+function getUsedPositions(board, opId) {
+    const positions = [];
+    for (let r=0; r<board.length; r++) for (let c=0; c<board[r].length; c++) {
+        board[r][c].forEach(item => { if (item.id === opId && item.slotPos) positions.push(item.slotPos); });
+    }
+    return positions;
+}
+
+function placeOp(board, opId, r, c) {
+    const opItem = ALL_OPS.find(o => o.id === opId);
+    if (!opItem) return false;
+    if (opItem.single) {
+        const existing = findOpInBoard(board, opId);
+        if (existing) board[existing.r][existing.c].splice(existing.idx, 1);
+    } else {
+        if (countOpInBoard(board, opId) >= opItem.maxCount) {
+            alert(`“${opItem.label}”已达最大次数 ${opItem.maxCount}`);
+            return false;
+        }
+    }
+    const itemData = { id: opId, label: opItem.label, type: opItem.type, col: c+1, row: r+1, opData: opItem };
+    if (!opItem.single) {
+        const used = getUsedPositions(board, opId);
+        let pos = 1;
+        while (used.includes(pos)) pos++;
+        if (pos > opItem.maxCount) { alert(`位置已满`); return false; }
+        itemData.slotPos = pos;
+        itemData.label = `${opItem.label}-${pos}`;
+    }
+    board[r][c].push(itemData);
+    return true;
+}
+
+function renderBoard(gridId, boardData, isLate) {
+    const gridEl = document.getElementById(gridId);
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, 68px)`;
+    gridEl.innerHTML = '';
+    for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) {
+        const cellItems = boardData[r][c] || [];
+        const d = document.createElement('div');
+        d.className = 'cell' + (cellItems.length ? ' has' : '');
+        d.dataset.r = r; d.dataset.c = c;
+        d.setAttribute('data-tooltip', '点击放置选中的操作，右键清空该格');
+        d.setAttribute('data-tooltip-delay', '1000');
+        
+        if (isLate && currentValues['是否魔甘收尾(牢玩家专属)']?.index === 1 && r === 2 && c === 8) {
+            if (cellItems.length === 0) {
+                const tag = document.createElement('span');
+                tag.className = 'tag placeholder';
+                tag.textContent = '魔音(9-3)';
+                d.appendChild(tag);
+                d.classList.add('has');
+            }
+        }
+        cellItems.forEach(item => {
+            const tag = document.createElement('span');
+            tag.className = `tag ${item.type}`;
+            tag.textContent = item.label || item.id;
+            d.appendChild(tag);
+        });
+        const cl = document.createElement('span');
+        cl.className = 'col-label';
+        cl.textContent = 'C'+(c+1);
+        const rl = document.createElement('span');
+        rl.className = 'row-label';
+        rl.textContent = 'R'+(r+1);
+        d.appendChild(cl); d.appendChild(rl);
+
+        d.addEventListener('dragover', function(e) { e.preventDefault(); });
+        d.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text/plain');
+            if (!data || !data.startsWith('op_')) return;
+            const opId = data.substring(3);
+            const tr = parseInt(d.dataset.r);
+            const tc = parseInt(d.dataset.c);
+            if (placeOp(boardData, opId, tr, tc)) { renderAllBoards(); updatePreview(); }
+        });
+        d.addEventListener('click', function() {
+            if (!selectedOp) return;
+            const tr = parseInt(d.dataset.r);
+            const tc = parseInt(d.dataset.c);
+            if (placeOp(boardData, selectedOp.id, tr, tc)) {
+                renderAllBoards();
+                updatePreview();
+                if (!isBatchMode) { clearSelected(); updateSelectedUI(); }
+            }
+        });
+        d.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            const tr = parseInt(d.dataset.r);
+            const tc = parseInt(d.dataset.c);
+            if (boardData[tr] && boardData[tr][tc]) {
+                boardData[tr][tc] = [];
+                renderAllBoards();
+                updatePreview();
+                document.getElementById('statusMsg').textContent = `🗑️ 已清空 (${tc+1}, ${tr+1})`;
+            }
+        });
+        gridEl.appendChild(d);
+        enableTooltip(d);
+    }
+}
+
+function renderAllBoards() {
+    renderBoard('gridEarly', boardEarly, false);
+    renderBoard('gridLate', boardLate, true);
+}
+
+function clearBoard(isLate) {
+    const board = isLate ? boardLate : boardEarly;
+    for (let r=0; r<board.length; r++) for (let c=0; c<board[r].length; c++) board[r][c] = [];
+    renderAllBoards(); updatePreview();
+}
+function resizeBoards() {
+    const nc = Math.max(1, Math.min(9, parseInt(document.getElementById('colN').value) || 9));
+    const nr = Math.max(1, Math.min(5, parseInt(document.getElementById('rowN').value) || 5));
+    const oldEarly = boardEarly, oldLate = boardLate;
+    const newEarly = [], newLate = [];
+    for (let r=0; r<nr; r++) {
+        newEarly.push(Array(nc).fill(null).map(() => []));
+        newLate.push(Array(nc).fill(null).map(() => []));
+        for (let c=0; c<nc; c++) {
+            if (r < oldEarly.length && c < oldEarly[0].length) {
+                newEarly[r][c] = oldEarly[r][c] || [];
+                newLate[r][c] = oldLate[r][c] || [];
+            }
+        }
+    }
+    boardEarly = newEarly; boardLate = newLate;
+    cols = nc; rows = nr;
+    renderAllBoards(); updatePreview();
+}
+function initTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    const contents = { early: document.getElementById('tabEarly'), late: document.getElementById('tabLate') };
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const target = this.dataset.tab;
+            Object.keys(contents).forEach(key => { contents[key].classList.toggle('active', key === target); });
+            renderOps(target);
+            renderQuickSwitches(target);
+            clearSelected();
+            updateSelectedUI();
+            setTimeout(() => resetKeyboardNavigation(), 50);
+        });
+    });
+}
+
+// ============================================================
+// 9. 选项树
+// ============================================================
+let currentValues = {};
+function initDefaultValues() {
+    for (const [name, def] of Object.entries(OPTION_DEFS)) {
+        if (def.type === 'select' || def.type === 'switch') {
+            currentValues[name] = { index: (name === '无尽模式') ? 1 : 0 };
+        } else if (def.type === 'input') {
+            const data = {};
+            if (def.inputs) def.inputs.forEach(inp => data[inp.name] = inp.default || '');
+            currentValues[name] = { data };
+        } else if (def.type === 'checkbox') {
+            currentValues[name] = { selected_cases: [] };
+        }
+    }
+}
+initDefaultValues();
+
+function buildOptionUI(container, optionNames) {
+    const root = document.createElement('div');
+    root.className = 'option-node option-node-root';
+    container.appendChild(root);
+    optionNames.forEach(name => {
+        const def = OPTION_DEFS[name];
+        if (!def) {
+            const item = document.createElement('div');
+            item.className = 'option-item';
+            item.innerHTML = `<span class="label">❓ ${name}</span>`;
+            root.appendChild(item);
+            return;
+        }
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'option-item';
+        const label = document.createElement('span');
+        label.className = 'label';
+        label.textContent = def.label || name;
+        if (def.description) label.title = def.description;
+        itemDiv.appendChild(label);
+
+        const controlDiv = document.createElement('div');
+        controlDiv.className = 'control';
+        if (def.type === 'select') {
+            const sel = document.createElement('select');
+            def.cases.forEach((c, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = c.label || c.name;
+                sel.appendChild(opt);
+            });
+            sel.value = currentValues[name]?.index || 0;
+            sel.addEventListener('change', function() {
+                currentValues[name] = { index: parseInt(this.value) };
+                rebuildChildren(itemDiv, name);
+                updatePreview();
+            });
+            controlDiv.appendChild(sel);
+            sel.setAttribute('data-tooltip', `选择 ${name} 的选项`);
+            enableTooltip(sel);
+        } else if (def.type === 'switch') {
+            const group = document.createElement('div');
+            group.className = 'switch-group';
+            const cases = def.cases || [{name:'No'},{name:'Yes'}];
+            cases.forEach((c, idx) => {
+                const label2 = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `switch_${name}`;
+                radio.value = idx;
+                if (currentValues[name]?.index === idx) radio.checked = true;
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        currentValues[name] = { index: parseInt(this.value) };
+                        rebuildChildren(itemDiv, name);
+                        updatePreview();
+                        const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+                        renderQuickSwitches(currentTab);
+                        updateRightPanelSwitches();
+                    }
+                });
+                label2.appendChild(radio);
+                label2.appendChild(document.createTextNode(c.label || c.name));
+                group.appendChild(label2);
+                radio.setAttribute('data-tooltip', `选择 ${name} 为 ${c.label || c.name}`);
+                enableTooltip(radio);
+            });
+            controlDiv.appendChild(group);
+        } else if (def.type === 'input') {
+            const inputs = def.inputs || [{name:'value',default:''}];
+            const container2 = document.createElement('div');
+            container2.style.display = 'flex';
+            container2.style.gap = '6px';
+            container2.style.flexWrap = 'wrap';
+            inputs.forEach(inp => {
+                const wrapper = document.createElement('span');
+                const lbl = document.createElement('label');
+                lbl.textContent = (inp.label || inp.name) + ':';
+                lbl.style.fontSize = '12px';
+                const el = document.createElement('input');
+                el.type = 'text';
+                el.style.width = '70px';
+                el.value = (currentValues[name]?.data?.[inp.name]) || inp.default || '';
+                el.addEventListener('input', function() {
+                    if (!currentValues[name]) currentValues[name] = { data: {} };
+                    currentValues[name].data[inp.name] = this.value;
+                    updatePreview();
+                });
+                wrapper.appendChild(lbl);
+                wrapper.appendChild(el);
+                container2.appendChild(wrapper);
+                el.setAttribute('data-tooltip', `输入 ${name} 的 ${inp.label || inp.name}`);
+                enableTooltip(el);
+            });
+            controlDiv.appendChild(container2);
+        } else if (def.type === 'checkbox') {
+            const group = document.createElement('div');
+            group.className = 'checkbox-group';
+            const cases = def.cases || [];
+            const selected = currentValues[name]?.selected_cases || [];
+            cases.forEach(c => {
+                const label2 = document.createElement('label');
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = c.name;
+                if (selected.includes(c.name)) cb.checked = true;
+                cb.addEventListener('change', function() {
+                    if (!currentValues[name]) currentValues[name] = { selected_cases: [] };
+                    if (this.checked) {
+                        if (!currentValues[name].selected_cases.includes(this.value))
+                            currentValues[name].selected_cases.push(this.value);
+                    } else {
+                        const idx = currentValues[name].selected_cases.indexOf(this.value);
+                        if (idx !== -1) currentValues[name].selected_cases.splice(idx, 1);
+                    }
+                    updatePreview();
+                });
+                label2.appendChild(cb);
+                label2.appendChild(document.createTextNode(c.label || c.name));
+                group.appendChild(label2);
+                cb.setAttribute('data-tooltip', `勾选 ${c.label || c.name}`);
+                enableTooltip(cb);
+            });
+            controlDiv.appendChild(group);
+        }
+        itemDiv.appendChild(controlDiv);
+        root.appendChild(itemDiv);
+
+        const childContainer = document.createElement('div');
+        childContainer.className = 'children-container';
+        root.appendChild(childContainer);
+        itemDiv._childContainer = childContainer;
+        itemDiv._optionName = name;
+        rebuildChildren(itemDiv, name);
+    });
+}
+function rebuildChildren(itemDiv, parentName) {
+    const container = itemDiv._childContainer;
+    container.innerHTML = '';
+    const def = OPTION_DEFS[parentName];
+    if (!def) return;
+    let childNames = [];
+    const val = currentValues[parentName];
+    if (def.type === 'select' || def.type === 'switch') {
+        const idx = val?.index ?? 0;
+        const cases = def.cases || [];
+        if (idx < cases.length && cases[idx].option) childNames = cases[idx].option;
+    }
+    if (childNames.length === 0) {
+        const hint = document.createElement('div');
+        hint.className = 'empty-hint';
+        hint.textContent = '（无子选项）';
+        container.appendChild(hint);
+        return;
+    }
+    const sub = document.createElement('div');
+    sub.className = 'option-tree';
+    container.appendChild(sub);
+    buildOptionUI(sub, childNames);
+}
+function getRootOptionNames() {
+    const modeDef = OPTION_DEFS["无尽模式"];
+    if (!modeDef || modeDef.type !== 'select') return [];
+    const caseObj = modeDef.cases.find(c => c.name === '无尽通用框架');
+    return caseObj ? caseObj.option || [] : [];
+}
+
+// ============================================================
+// 10. 核心导出（只保留无尽挑战任务）
+// ============================================================
+function buildOptionNode(name) {
+    const def = OPTION_DEFS[name];
+    if (!def) return { name };
+    const node = { name };
+    const val = currentValues[name];
+    if (def.type === 'select' || def.type === 'switch') {
+        node.index = val?.index ?? 0;
+        const cases = def.cases || [];
+        const idx = node.index;
+        if (idx < cases.length && cases[idx].option) {
+            const children = cases[idx].option.map(child => buildOptionNode(child));
+            if (children.length) node.sub_options = children;
+        }
+    } else if (def.type === 'input') {
+        node.data = val?.data || {};
+    } else if (def.type === 'checkbox') {
+        node.selected_cases = val?.selected_cases || [];
+    }
+    return node;
+}
+
+function buildFullInstance() {
+    // ===== 1. 备份用户手动控制的开关（不包括识别开关，它们由 UI 直接控制） =====
+    const userControlledKeys = [
+        '是否抛花', '小关是否抛花', 'boss关是否抛花',
+        '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
+        '小关是否加速', 'fw_boss关是否加速',
+        'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
+        '小关是否喂豆', 'fw_boss关是否需要喂豆',
+        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
+        '自定义布阵'
+    ];
+    const backup = {};
+    userControlledKeys.forEach(key => {
+        backup[key] = currentValues[key] ? JSON.parse(JSON.stringify(currentValues[key])) : { index: 0 };
+    });
+
+    // ===== 2. 从棋盘提取操作 =====
+    const rawOps = [];
+    const boards = [
+        { name: 'early', data: boardEarly },
+        { name: 'late', data: boardLate }
+    ];
+    boards.forEach(board => {
+        for (let r = 0; r < board.data.length; r++) {
+            for (let c = 0; c < board.data[r].length; c++) {
+                board.data[r][c].forEach(item => {
+                    if (item.col && item.row) {
+                        rawOps.push({
+                            id: item.id,
+                            col: item.col,
+                            row: item.row,
+                            board: board.name,
+                            opData: item.opData || ALL_OPS.find(o => o.id === item.id),
+                            slotPos: item.slotPos || null,
+                            label: item.label
+                        });
+                    }
+                });
+            }
+        }
+    });
+
+    // ===== 3. 重置所有棋盘驱动的开关 =====
+    for (let s = 1; s <= 8; s++) {
+        const p = `卡${s}`;
+        currentValues[`${p}种植`] = { index: 0 };
+        for (let i = 1; i <= 10; i++) {
+            currentValues[`${p}种第${i}次`] = { index: 0 };
+            currentValues[`${p}种第${i}次坐标`] = { data: {} };
+        }
+    }
+    currentValues['frame_wj_custom_是否种守卫菇'] = { index: 0 };
+    for (let i = 1; i <= 5; i++) {
+        currentValues[`frame_wj_custom_种守卫菇位置${i}`] = { index: 0 };
+        currentValues[`frame_wj_custom_种守卫菇位置${i}坐标`] = { data: {} };
+    }
+    currentValues['frame_wj_custom_是否使用铲子1'] = { index: 0 };
+    currentValues['frame_wj_custom_是否使用铲子2'] = { index: 0 };
+    for (let i = 1; i <= 10; i++) {
+        currentValues[`frame_wj_custom_使用铲子${i}`] = { index: 0 };
+        currentValues[`frame_wj_custom_使用铲子${i}坐标`] = { data: {} };
+    }
+    currentValues['是否需要补植物'] = { index: 0 };
+    for (let slot = 2; slot <= 5; slot++) {
+        currentValues[`卡槽${slot}_补植物`] = { index: 0 };
+        for (let pos = 1; pos <= 5; pos++) {
+            currentValues[`卡槽${slot}_${pos}`] = { index: 0 };
+            currentValues[`卡槽${slot}_${pos}坐标`] = { data: {} };
+        }
+    }
+    currentValues['铲除植物'] = { index: 0 };
+    for (let i = 1; i <= 5; i++) {
+        currentValues[`铲除植物${i}`] = { index: 0 };
+        currentValues[`铲除植物${i}坐标`] = { data: {} };
+    }
+    currentValues['小关是否抛花'] = { index: 0 };
+    currentValues['boss关是否抛花'] = { index: 0 };
+    currentValues['1花位置'] = { data: {} };
+    currentValues['2花位置'] = { data: {} };
+    for (let i = 1; i <= 4; i++) {
+        currentValues[`boss关_${i}花位置`] = { data: {} };
+    }
+    currentValues['魔甘前使用能量豆'] = { index: 0 };
+    currentValues['魔甘前喂豆位置'] = { data: {} };
+    currentValues['甜薯1种植位置'] = { data: {} };
+    currentValues['甜薯2种植位置'] = { data: {} };
+    currentValues['飓风甘蓝1种植位置'] = { data: {} };
+    currentValues['飓风甘蓝2种植位置'] = { data: {} };
+    currentValues['魔甘失败后是否重开'] = { index: 0 };
+    currentValues['frame_wj_custom_从boss关选卡界面开始'] = { index: 0 };
+    // 重置 custom 喂豆开关
+    currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 0 };
+    currentValues['frame_wj_custom_喂豆位置'] = { index: 0 };
+    currentValues['frame_wj_custom_喂豆位置坐标'] = { data: {} };
+    currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 0 };
+    currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 0 };
+    currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
+    // 重置普通喂豆位置
+    currentValues['小关喂豆位置'] = { data: {} };
+    currentValues['fw_boss关喂豆位置'] = { data: {} };
+
+    // ===== 4. 根据 rawOps 填充数据 =====
+    // 4.1 卡槽种植
+    for (let s = 1; s <= 8; s++) {
+        const id = `card${s}`;
+        const prefix = `卡${s}`;
+        const positions = rawOps.filter(op => op.id === id).slice(0, 10);
+        if (positions.length > 0) {
+            currentValues[`${prefix}种植`] = { index: 1 };
+            positions.forEach((op, idx) => {
+                const order = idx + 1;
+                currentValues[`${prefix}种第${order}次`] = { index: 1 };
+                currentValues[`${prefix}种第${order}次坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            });
+        }
+    }
+
+    // 4.2 守卫菇
+    const guardOps = rawOps.filter(op => op.id === 'guard');
+    if (guardOps.length > 0) {
+        currentValues['frame_wj_custom_是否种守卫菇'] = { index: 1 };
+        guardOps.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 5) {
+                currentValues[`frame_wj_custom_种守卫菇位置${pos}`] = { index: 1 };
+                currentValues[`frame_wj_custom_种守卫菇位置${pos}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        });
+    }
+
+    // 4.3 铲子
+    const shovelBefore = rawOps.filter(op => op.id === 'shovel_before');
+    if (shovelBefore.length > 0) {
+        currentValues['frame_wj_custom_是否使用铲子1'] = { index: 1 };
+        shovelBefore.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 5) {
+                currentValues[`frame_wj_custom_使用铲子${pos}`] = { index: 1 };
+                currentValues[`frame_wj_custom_使用铲子${pos}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        });
+    }
+    const shovelAfter = rawOps.filter(op => op.id === 'shovel_after');
+    if (shovelAfter.length > 0) {
+        currentValues['frame_wj_custom_是否使用铲子2'] = { index: 1 };
+        shovelAfter.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 5) {
+                const idx = pos + 5;
+                currentValues[`frame_wj_custom_使用铲子${idx}`] = { index: 1 };
+                currentValues[`frame_wj_custom_使用铲子${idx}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        });
+    }
+
+    // 4.4 补植物
+    const patchOps = rawOps.filter(op => op.id.startsWith('patch_slot'));
+    if (patchOps.length > 0) {
+        currentValues['是否需要补植物'] = { index: 1 };
+        const grouped = {};
+        patchOps.forEach(op => {
+            const slot = op.opData.slot;
+            if (!grouped[slot]) grouped[slot] = [];
+            grouped[slot].push(op);
+        });
+        for (const [slot, ops] of Object.entries(grouped)) {
+            const slotNum = parseInt(slot);
+            const switchName = `卡槽${slotNum}_补植物`;
+            currentValues[switchName] = { index: 1 };
+            ops.forEach(op => {
+                const pos = op.slotPos;
+                if (pos >= 1 && pos <= 5) {
+                    const name = `卡槽${slotNum}_${pos}`;
+                    currentValues[name] = { index: 1 };
+                    currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+                }
+            });
+        }
+    }
+
+    // 4.5 铲除
+    const shovelLate = rawOps.filter(op => op.id === 'shovel_late');
+    if (shovelLate.length > 0) {
+        currentValues['铲除植物'] = { index: 1 };
+        shovelLate.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 5) {
+                currentValues[`铲除植物${pos}`] = { index: 1 };
+                currentValues[`铲除植物${pos}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        });
+    }
+
+    // ===== 4.6 普通开关与 custom 开关分离 =====
+    const allFeed = rawOps.filter(op => ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
+    const feedNormal = allFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
+    const bossFeedNormal = allFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
+
+    if (feedNormal.length > 0) {
+        const last = feedNormal[feedNormal.length - 1];
+        currentValues['小关是否喂豆'] = { index: 1 };
+        currentValues['小关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
+    }
+    if (bossFeedNormal.length > 0) {
+        const last = bossFeedNormal[bossFeedNormal.length - 1];
+        currentValues['fw_boss关是否需要喂豆'] = { index: 1 };
+        currentValues['fw_boss关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
+    }
+
+    // Custom 开关只由前期控制
+    const earlyFeed = rawOps.filter(op => op.board === 'early' && ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
+    const earlyFeedSmall = earlyFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
+    const earlyFeedBoss = earlyFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
+
+    if (earlyFeedSmall.length > 0) {
+        const last = earlyFeedSmall[earlyFeedSmall.length - 1];
+        currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 1 };
+        currentValues['frame_wj_custom_喂豆位置'] = { index: 1 };
+        currentValues['frame_wj_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
+    } else {
+        currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 0 };
+        currentValues['frame_wj_custom_喂豆位置'] = { index: 0 };
+        currentValues['frame_wj_custom_喂豆位置坐标'] = { data: {} };
+    }
+
+    if (earlyFeedBoss.length > 0) {
+        const last = earlyFeedBoss[earlyFeedBoss.length - 1];
+        currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 1 };
+        currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 1 };
+        currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
+    } else {
+        currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 0 };
+        currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 0 };
+        currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
+    }
+
+    // 4.7 抛花
+    const flowerOps = rawOps.filter(op => op.id === 'flower');
+    if (flowerOps.length > 0 && backup['是否抛花']?.index === 1) {
+        currentValues['小关是否抛花'] = { index: 1 };
+        flowerOps.forEach(op => {
+            const pos = op.slotPos;
+            if (pos === 1) currentValues['1花位置'] = { data: { "列": String(op.col), "行": String(op.row) } };
+            else if (pos === 2) currentValues['2花位置'] = { data: { "列": String(op.col), "行": String(op.row) } };
+        });
+    }
+    const bossFlowerOps = rawOps.filter(op => op.id === 'bossflower');
+    if (bossFlowerOps.length > 0 && backup['是否抛花']?.index === 1) {
+        currentValues['boss关是否抛花'] = { index: 1 };
+        bossFlowerOps.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 4) {
+                currentValues[`boss关_${pos}花位置`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        });
+    }
+
+    // 4.8 魔甘
+    const magicOps = rawOps.filter(op => ['sweet1', 'sweet2', 'ganlan1', 'ganlan2', 'magicfeed'].includes(op.id));
+    if (magicOps.length > 0 && backup['是否魔甘收尾(牢玩家专属)']?.index === 1) {
+        const magicMap = {
+            'sweet1': '甜薯1种植位置',
+            'sweet2': '甜薯2种植位置',
+            'ganlan1': '飓风甘蓝1种植位置',
+            'ganlan2': '飓风甘蓝2种植位置',
+            'magicfeed': '魔甘前喂豆位置'
+        };
+        if (rawOps.some(op => op.id === 'magicfeed')) {
+            currentValues['魔甘前使用能量豆'] = { index: 1 };
+        }
+        for (const [id, optName] of Object.entries(magicMap)) {
+            const op = rawOps.find(o => o.id === id);
+            if (op) {
+                currentValues[optName] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
+        }
+    }
+
+    // 4.9 自定义布阵
+    currentValues['自定义布阵'] = rawOps.length > 0 ? { index: 1 } : { index: 0 };
+    // 如果用户输入了前期转后期，强制开启自定义布阵
+    const returnLateVal = currentValues['frame_wj_custom_回到后期']?.data?.关卡;
+    if (returnLateVal && returnLateVal.trim() !== '') {
+      currentValues['自定义布阵'] = { index: 1 };
+    }
+
+    // ===== 5. 恢复用户控制的开关（不包括识别开关） =====
+    const userOnlyKeys = [
+        '是否抛花', '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
+        '小关是否加速', 'fw_boss关是否加速',
+        'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
+        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸'
+    ];
+    userOnlyKeys.forEach(key => {
+        currentValues[key] = backup[key] || { index: 0 };
+    });
+
+    // 如果识别开关为1，强制开启父级（但识别开关本身由 UI 控制，我们保留其值）
+    if (currentValues['识别能量花卡槽位置']?.index === 1) {
+        currentValues['是否抛花'] = { index: 1 };
+    }
+    if (currentValues['识别魔甘卡槽位置']?.index === 1) {
+        currentValues['魔甘高级选项'] = { index: 1 };
+        currentValues['是否魔甘收尾(牢玩家专属)'] = { index: 1 };
+    }
+    if (currentValues['识别三叶草卡槽位置']?.index === 1) {
+        currentValues['使用三叶草'] = { index: 1 };
+        currentValues['是否魔甘收尾(牢玩家专属)'] = { index: 1 };
+    }
+
+    // ===== 6. 构建 option 树（含反转逻辑） =====
+    function buildCleanNode(name) {
+        const def = OPTION_DEFS[name];
+        if (!def) return null;
+        const val = currentValues[name];
+        const node = { name };
+
+        if (def.type === 'select' || def.type === 'switch') {
+            let idx = val?.index ?? 0;
+            // 对三个识别开关反转索引：勾选时 index=1 → 导出 0；未勾选 index=0 → 导出 1
+            const isRecog = name === '识别能量花卡槽位置' || name === '识别魔甘卡槽位置' || name === '识别三叶草卡槽位置';
+            if (isRecog) {
+                idx = idx === 0 ? 1 : 0;
+            }
+            node.index = idx;
+            const cases = def.cases || [];
+            if (idx < cases.length && cases[idx].option) {
+                const children = cases[idx].option
+                    .map(child => buildCleanNode(child))
+                    .filter(child => child !== null);
+                if (children.length > 0) {
+                    node.sub_options = children;
+                }
+            }
+            return node;
+        } else if (def.type === 'input') {
+            const data = val?.data || {};
+            const hasData = Object.values(data).some(v => v !== '' && v !== undefined && v !== null);
+            if (!hasData) return null;
+            node.data = data;
+            return node;
+        } else if (def.type === 'checkbox') {
+            const selected = val?.selected_cases || [];
+            if (selected.length === 0) return null;
+            node.selected_cases = selected;
+            return node;
+        }
+        return null;
+    }
+
+    const rootNames = getRootOptionNames();
+    let subOptions = rootNames
+        .map(name => buildCleanNode(name))
+        .filter(n => n !== null);
+
+    // ===== 强制修复：确保自定义布阵下的 custom 子节点完整 =====
+    const customNode = subOptions.find(n => n.name === '自定义布阵');
+    if (customNode && customNode.sub_options) {
+        function deduplicateNodes(arr) {
+            const seen = new Set();
+            return arr.filter(node => {
+                const key = node.name;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        // 处理前期小关喂豆
+        const feedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_布完阵是否喂豆');
+        if (feedSwitch) {
+            if (currentValues['frame_wj_custom_布完阵是否喂豆']?.index === 1) {
+                if (!feedSwitch.sub_options) feedSwitch.sub_options = [];
+                feedSwitch.sub_options = deduplicateNodes(feedSwitch.sub_options);
+                if (!feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置')) {
+                    feedSwitch.sub_options.push({
+                        name: 'frame_wj_custom_喂豆位置',
+                        index: currentValues['frame_wj_custom_喂豆位置']?.index ?? 1,
+                        sub_options: []
+                    });
+                }
+                const feedPosNode = feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置');
+                if (feedPosNode) {
+                    if (!feedPosNode.sub_options) feedPosNode.sub_options = [];
+                    feedPosNode.sub_options = deduplicateNodes(feedPosNode.sub_options);
+                    if (!feedPosNode.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置坐标')) {
+                        const coord = currentValues['frame_wj_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
+                        feedPosNode.sub_options.push({
+                            name: 'frame_wj_custom_喂豆位置坐标',
+                            data: coord
+                        });
+                    }
+                }
+            } else {
+                feedSwitch.sub_options = [];
+            }
+        }
+
+        // 处理前期 Boss 喂豆
+        const bossFeedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_boss关是否喂豆');
+        if (bossFeedSwitch) {
+            if (currentValues['frame_wj_custom_boss关是否喂豆']?.index === 1) {
+                if (!bossFeedSwitch.sub_options) bossFeedSwitch.sub_options = [];
+                bossFeedSwitch.sub_options = deduplicateNodes(bossFeedSwitch.sub_options);
+                if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置')) {
+                    bossFeedSwitch.sub_options.push({
+                        name: 'frame_wj_boss_custom_喂豆位置',
+                        index: currentValues['frame_wj_boss_custom_喂豆位置']?.index ?? 1,
+                        sub_options: []
+                    });
+                }
+                const bossPosNode = bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置');
+                if (bossPosNode) {
+                    if (!bossPosNode.sub_options) bossPosNode.sub_options = [];
+                    bossPosNode.sub_options = deduplicateNodes(bossPosNode.sub_options);
+                    if (!bossPosNode.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置坐标')) {
+                        const coord = currentValues['frame_wj_boss_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
+                        bossPosNode.sub_options.push({
+                            name: 'frame_wj_boss_custom_喂豆位置坐标',
+                            data: coord
+                        });
+                    }
+                }
+                if (currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数) {
+                    if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆间隔')) {
+                        bossFeedSwitch.sub_options.push({
+                            name: 'frame_wj_boss_custom_喂豆间隔',
+                            data: currentValues['frame_wj_boss_custom_喂豆间隔'].data
+                        });
+                    }
+                }
+            } else {
+                bossFeedSwitch.sub_options = [];
+            }
+        }
+    }
+
+    // ===== 强制修复识别开关节点（直接从 currentValues 读取，但已由 buildCleanNode 反转）=====
+    // 由于 buildCleanNode 已包含反转，此处不再额外处理，保留原样
+
+    const optionTree = {
+        name: "无尽模式",
+        index: 1,
+        sub_options: subOptions.length > 0 ? subOptions : []
+    };
+
+    // ===== 7. 构建最终实例 =====
+    const instanceName = document.getElementById('configName').value.trim() || "无尽_前后期";
+    const controller = document.getElementById('controllerName').value.trim() || "安卓端";
+    const resource = ''; // 强制设为空
+    const entry = document.getElementById('taskEntry').value.trim() || "无尽挑战_前置检查";
+
+    return {
+    "CurrentControllerName": controller,
+    "Resource": "",   // 空字符串
+    "CurrentTasks": [`无尽挑战（测试）<|||>${entry}`],
+    "TaskItems": [{
+        "name": "无尽挑战（测试）",
+        "entry": entry,
+        "default_check": true,
+        "option": [optionTree]
+    }],
+    "AdbDevice": {
+        "InfoHandle": { "value": 0 },
+        "Name": "模拟器",
+        "AdbPath": "adb",
+        "AdbSerial": "127.0.0.1:5555",
+        "ScreencapMethods": 64,
+        "InputMethods": 18446744073709551615,
+        "Config": "{}",
+        "AgentPath": "./MaaAgentBinary"
+    },
+    // 删除 ResourceOptionItems 字段，或者保留为空对象
+    "CurrentController": 2,
+    "RetryOnDisconnected": true,
+    "AllowAdbRestart": false,
+    "InstanceName": instanceName,
+    "ContinueRunningWhenError": true,
+    "BeforeTask": "None"
+};
+}
+function updatePreview() {
+    const data = buildFullInstance();
+    document.getElementById('previewText').value = JSON.stringify(data, null, 2);
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+    renderQuickSwitches(currentTab);
+    updateRightPanelSwitches();
+
+    // 同步右侧“前期转后期”输入框
+    const returnLateInput = document.getElementById('customReturnLate');
+    if (returnLateInput) {
+        const val = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
+        returnLateInput.value = val;
+    }
+}
+
+function exportJSON() {
+    const data = buildFullInstance();
+    const name = document.getElementById('fileName').value.trim() || data.InstanceName || "无尽配置";
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    document.getElementById('statusMsg').textContent = `✅ 已导出：${name}.json`;
+}
+
+function loadDefaults() {
+    initDefaultValues();
+    slotRemarks = Array(8).fill('');
+    renderSlotRemarks();
+    initBoards();
+    renderAllBoards();
+    clearSelected();
+    updateSelectedUI();
+    const container = document.getElementById('optionTree');
+    container.innerHTML = '';
+    buildOptionUI(container, getRootOptionNames());
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+    renderQuickSwitches(currentTab);
+    document.querySelector('.tab[data-tab="early"]').click();
+    updatePreview();
+    updateRightPanelSwitches();
+    setTimeout(() => resetKeyboardNavigation(), 100);
+    document.getElementById('statusMsg').textContent = '↺ 已恢复默认';
+}
+
+function copyPreview() {
+    const text = document.getElementById('previewText');
+    text.select();
+    navigator.clipboard.writeText(text.value).then(() => {
+        document.getElementById('statusMsg').textContent = '📋 已复制到剪贴板';
+    }).catch(() => {
+        document.execCommand('copy');
+        document.getElementById('statusMsg').textContent = '📋 已复制';
+    });
+}
+
+// ============================================================
+// 11. 初始化
+// ============================================================
+window.onload = function() {
+    // 启用静态元素的 tooltip
+    enableTooltips('[data-tooltip]');
+    // 监听动态添加的元素
+    observeNewElements();
+
+    renderSlotRemarks();
+    initBoards();
+    renderAllBoards();
+    initTabs();
+
+    const container = document.getElementById('optionTree');
+    buildOptionUI(container, getRootOptionNames());
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+    renderQuickSwitches(currentTab);
+    document.querySelector('.tab[data-tab="early"]').click();
+
+    document.getElementById('batchMode').checked = true;
+    isBatchMode = true;
+
+    renderRightPanelSwitches();
+    updateRightPanelSwitches();
+
+    // 绑定右侧“前期转后期”输入框
+    const returnLateInput = document.getElementById('customReturnLate');
+    if (returnLateInput) {
+        returnLateInput.value = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
+        returnLateInput.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (!currentValues['frame_wj_custom_回到后期']) {
+                currentValues['frame_wj_custom_回到后期'] = { data: {} };
+            }
+            currentValues['frame_wj_custom_回到后期'].data.关卡 = val;
+            if (val !== '') {
+                currentValues['自定义布阵'] = { index: 1 };
+            }
+            updatePreview();
+        });
+    }
+
+    updatePreview();
+
+    document.getElementById('exportBtn').addEventListener('click', exportJSON);
+    document.getElementById('loadDefaultBtn').addEventListener('click', loadDefaults);
+    document.getElementById('copyBtn').addEventListener('click', copyPreview);
+    document.getElementById('btnClearEarly').addEventListener('click', function() {
+        if (confirm('确定重置前期棋盘吗？')) {
+            clearBoard(false);
+            document.getElementById('statusMsg').textContent = '🗑️ 前期棋盘已清空';
+        }
+    });
+    document.getElementById('btnClearLate').addEventListener('click', function() {
+        if (confirm('确定重置后期棋盘吗？')) {
+            clearBoard(true);
+            document.getElementById('statusMsg').textContent = '🗑️ 后期棋盘已清空';
+        }
+    });
+    document.getElementById('btnResize').addEventListener('click', resizeBoards);
+
+    ['configName','controllerName','resourceName','taskEntry'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePreview);
+    });
+
+    currentValues['无尽模式'] = { index: 1 };
+    loadDefaults();
+};
+</script>
+</body>
+</html>
