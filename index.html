@@ -1829,7 +1829,6 @@ if (patchOps.length > 0) {
     currentValues['是否需要补植物'] = { index: 1 };
     const grouped = {};
     patchOps.forEach(op => {
-        // 直接从 id 中提取卡槽号，例如 'patch_slot6' -> 6
         const slotMatch = op.id.match(/patch_slot(\d+)/);
         if (slotMatch) {
             const slot = parseInt(slotMatch[1]);
@@ -1839,12 +1838,12 @@ if (patchOps.length > 0) {
     });
     for (const [slot, ops] of Object.entries(grouped)) {
         const slotNum = parseInt(slot);
-        const switchName = `卡槽${slotNum}_补植物`;
+        const switchName = `frame_卡槽${slotNum}_补植物`;
         currentValues[switchName] = { index: 1 };
         ops.forEach(op => {
             const pos = op.slotPos;
             if (pos >= 1 && pos <= 5) {
-                const name = `卡槽${slotNum}_${pos}`;
+                const name = `frame_卡槽${slotNum}_${pos}`;
                 currentValues[name] = { index: 1 };
                 currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
             }
