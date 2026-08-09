@@ -98,7 +98,6 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
 .right-controls .ctrl-item input[type="checkbox"] { margin:0; width:16px; height:16px; cursor:pointer; }
 .right-controls .ctrl-item input:disabled { opacity:0.5; cursor:not-allowed; }
 
-/* Tooltip 样式 */
 .tooltip-box {
     position: fixed;
     background: #1e293b;
@@ -116,13 +115,10 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
     border: 1px solid #475569;
     font-weight: 400;
 }
-.tooltip-box.visible {
-    opacity: 1;
-}
+.tooltip-box.visible { opacity: 1; }
 </style>
 </head>
 <body>
-<!-- Tooltip 容器 -->
 <div id="tooltip" class="tooltip-box"></div>
 
 <div class="app">
@@ -229,7 +225,6 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
                     </div>
                     ⌨️ W/S 选操作 &nbsp; A/D 切换前后期 &nbsp; 🖱️ 右键取消格子
                 </div>
-                <!-- 右侧快速控制 -->
                 <div class="right-controls" id="rightQuickControls"></div>
             </div>
         </div>
@@ -281,17 +276,17 @@ if (typeof OPTION_DEFS === 'undefined') {
             ]
         },
         "是否需要补植物": {
-    type: "switch",
-    cases: [
-        { name: "No" },
-        { name: "Yes", option: [
-            "frame_卡槽2_补植物", "frame_卡槽3_补植物", "frame_卡槽4_补植物",
-            "frame_卡槽5_补植物", "frame_卡槽6_补植物", "frame_卡槽7_补植物",
-            "frame_卡槽8_补植物",
-            "铲除植物"
-        ] }
-    ]
-},
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [
+                    "frame_卡槽2_补植物", "frame_卡槽3_补植物", "frame_卡槽4_补植物",
+                    "frame_卡槽5_补植物", "frame_卡槽6_补植物", "frame_卡槽7_补植物",
+                    "frame_卡槽8_补植物",
+                    "铲除植物"
+                ] }
+            ]
+        },
         "铲除植物": {
             type: "switch",
             cases: [
@@ -305,14 +300,9 @@ if (typeof OPTION_DEFS === 'undefined') {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "小关是否抛花",
-                        "boss关是否抛花",
-                        "识别能量花卡槽位置"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "小关是否抛花", "boss关是否抛花", "识别能量花卡槽位置"
+                ] }
             ]
         },
         "小关是否抛花": {
@@ -340,116 +330,77 @@ if (typeof OPTION_DEFS === 'undefined') {
         "识别能量花卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "识别魔甘卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "识别三叶草卡槽位置": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
-        
-        // ========== 小关喂豆 ==========
+
         "小关是否喂豆": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "是否开局喂豆球果",
-                        "小关喂豆位置",
-                        "小关喂豆间隔"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "是否开局喂豆球果", "小关喂豆位置", "小关喂豆间隔"
+                ] }
             ]
         },
-        // ========== Boss关喂豆 ==========
         "fw_boss关是否需要喂豆": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "fw_boss关喂豆位置",
-                        "fw_boss关喂豆间隔"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "fw_boss关喂豆位置", "fw_boss关喂豆间隔"
+                ] }
             ]
         },
-        // ========== 守卫菇 & 铲子 ==========
         "frame_wj_custom_是否种守卫菇": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "frame_wj_custom_种守卫菇位置1",
-                        "frame_wj_custom_种守卫菇位置2",
-                        "frame_wj_custom_种守卫菇位置3",
-                        "frame_wj_custom_种守卫菇位置4",
-                        "frame_wj_custom_种守卫菇位置5"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "frame_wj_custom_种守卫菇位置1", "frame_wj_custom_种守卫菇位置2",
+                    "frame_wj_custom_种守卫菇位置3", "frame_wj_custom_种守卫菇位置4",
+                    "frame_wj_custom_种守卫菇位置5"
+                ] }
             ]
         },
         "frame_wj_custom_是否使用铲子1": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "frame_wj_custom_使用铲子1",
-                        "frame_wj_custom_使用铲子2",
-                        "frame_wj_custom_使用铲子3",
-                        "frame_wj_custom_使用铲子4",
-                        "frame_wj_custom_使用铲子5"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "frame_wj_custom_使用铲子1", "frame_wj_custom_使用铲子2",
+                    "frame_wj_custom_使用铲子3", "frame_wj_custom_使用铲子4",
+                    "frame_wj_custom_使用铲子5"
+                ] }
             ]
         },
         "frame_wj_custom_是否使用铲子2": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "frame_wj_custom_使用铲子6",
-                        "frame_wj_custom_使用铲子7",
-                        "frame_wj_custom_使用铲子8",
-                        "frame_wj_custom_使用铲子9",
-                        "frame_wj_custom_使用铲子10"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "frame_wj_custom_使用铲子6", "frame_wj_custom_使用铲子7",
+                    "frame_wj_custom_使用铲子8", "frame_wj_custom_使用铲子9",
+                    "frame_wj_custom_使用铲子10"
+                ] }
             ]
         },
-        // ========== 魔甘收尾 ==========
         "是否魔甘收尾(牢玩家专属)": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "多少秒后种魔甘",
-                        "使用三叶草",
-                        "魔甘高级选项"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "多少秒后种魔甘", "使用三叶草", "魔甘高级选项"
+                ] }
             ]
         },
         "魔甘高级选项": {
             type: "switch",
             cases: [
                 { name: "No" },
-                {
-                    name: "Yes",
-                    option: [
-                        "识别魔甘卡槽位置",
-                        "魔甘前使用能量豆",
-                        "甜薯1种植位置",
-                        "甜薯2种植位置",
-                        "飓风甘蓝1种植位置",
-                        "飓风甘蓝2种植位置",
-                        "魔甘失败后是否重开"
-                    ]
-                }
+                { name: "Yes", option: [
+                    "识别魔甘卡槽位置", "魔甘前使用能量豆",
+                    "甜薯1种植位置", "甜薯2种植位置",
+                    "飓风甘蓝1种植位置", "飓风甘蓝2种植位置",
+                    "魔甘失败后是否重开"
+                ] }
             ]
         },
         "魔甘前使用能量豆": {
@@ -466,8 +417,6 @@ if (typeof OPTION_DEFS === 'undefined') {
                 { name: "Yes", option: ["识别三叶草卡槽位置"] }
             ]
         },
-        // ==========================================
-
         "小关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "从boss关选卡界面开启": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "fw_boss关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
@@ -478,9 +427,10 @@ if (typeof OPTION_DEFS === 'undefined') {
         "frame_wj_custom_从boss关选卡界面开始": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "frame_wj_custom_回到后期": { type: "input", inputs: [{name:"关卡",default:"3"}] },
         "frame_wj_custom_布完阵是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
-        "frame_wj_custom_boss关是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
+        "frame_wj_custom_boss关是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] }
     };
-    // 动态生成所有子选项
+
+    // 动态生成卡槽种植子选项
     for (let s=1; s<=8; s++) {
         const prefix = `卡${s}`;
         OPTION_DEFS[`${prefix}种植`] = {
@@ -505,30 +455,39 @@ if (typeof OPTION_DEFS === 'undefined') {
             };
         }
     }
+
+    // 补植物：父节点带 frame_ 前缀，子节点 2~6 无前缀，7~8 带 frame_ 前缀
     for (let slot=2; slot<=8; slot++) {
-    const switchName = `frame_卡槽${slot}_补植物`;
-    OPTION_DEFS[switchName] = {
-        type: "switch",
-        cases: [
-            { name: "No" },
-            { name: "Yes", option: [`frame_卡槽${slot}_1`, `frame_卡槽${slot}_2`, `frame_卡槽${slot}_3`, `frame_卡槽${slot}_4`, `frame_卡槽${slot}_5`] }
-        ]
-    };
-    for (let pos=1; pos<=5; pos++) {
-        const name = `frame_卡槽${slot}_${pos}`;
-        OPTION_DEFS[name] = {
+        const switchName = `frame_卡槽${slot}_补植物`;
+        const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
+        const optionArray = [];
+        for (let pos=1; pos<=5; pos++) {
+            optionArray.push(`${childPrefix}${pos}`);
+        }
+        OPTION_DEFS[switchName] = {
             type: "switch",
             cases: [
                 { name: "No" },
-                { name: "Yes", option: [`${name}坐标`] }
+                { name: "Yes", option: optionArray }
             ]
         };
-        OPTION_DEFS[`${name}坐标`] = {
-            type: "input",
-            inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
-        };
+        for (let pos=1; pos<=5; pos++) {
+            const name = `${childPrefix}${pos}`;
+            OPTION_DEFS[name] = {
+                type: "switch",
+                cases: [
+                    { name: "No" },
+                    { name: "Yes", option: [`${name}坐标`] }
+                ]
+            };
+            OPTION_DEFS[`${name}坐标`] = {
+                type: "input",
+                inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+            };
+        }
     }
-}
+
+    // 铲除植物子选项
     for (let i=1; i<=5; i++) {
         const name = `铲除植物${i}`;
         OPTION_DEFS[name] = {
@@ -543,21 +502,63 @@ if (typeof OPTION_DEFS === 'undefined') {
             inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
         };
     }
+
+    // 守卫菇位置子选项
     for (let i=1; i<=5; i++) {
         const name = `frame_wj_custom_种守卫菇位置${i}`;
-        OPTION_DEFS[name] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:[`${name}坐标`]}] };
-        OPTION_DEFS[`${name}坐标`] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+        OPTION_DEFS[name] = {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [`${name}坐标`] }
+            ]
+        };
+        OPTION_DEFS[`${name}坐标`] = {
+            type: "input",
+            inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+        };
     }
+
+    // 铲子子选项
     for (let i=1; i<=10; i++) {
         const name = `frame_wj_custom_使用铲子${i}`;
-        OPTION_DEFS[name] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:[`${name}坐标`]}] };
-        OPTION_DEFS[`${name}坐标`] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
+        OPTION_DEFS[name] = {
+            type: "switch",
+            cases: [
+                { name: "No" },
+                { name: "Yes", option: [`${name}坐标`] }
+            ]
+        };
+        OPTION_DEFS[`${name}坐标`] = {
+            type: "input",
+            inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+        };
     }
-    OPTION_DEFS['frame_wj_custom_喂豆位置'] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:['frame_wj_custom_喂豆位置坐标']}] };
-    OPTION_DEFS['frame_wj_custom_喂豆位置坐标'] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
-    OPTION_DEFS['frame_wj_boss_custom_喂豆位置'] = { type: "switch", cases: [{name:"No"},{name:"Yes", option:['frame_wj_boss_custom_喂豆位置坐标']}] };
-    OPTION_DEFS['frame_wj_boss_custom_喂豆位置坐标'] = { type: "input", inputs: [{name:"列",default:"1"},{name:"行",default:"1"}] };
-    // 魔甘相关输入定义
+
+    OPTION_DEFS['frame_wj_custom_喂豆位置'] = {
+        type: "switch",
+        cases: [
+            { name: "No" },
+            { name: "Yes", option: ['frame_wj_custom_喂豆位置坐标'] }
+        ]
+    };
+    OPTION_DEFS['frame_wj_custom_喂豆位置坐标'] = {
+        type: "input",
+        inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+    };
+    OPTION_DEFS['frame_wj_boss_custom_喂豆位置'] = {
+        type: "switch",
+        cases: [
+            { name: "No" },
+            { name: "Yes", option: ['frame_wj_boss_custom_喂豆位置坐标'] }
+        ]
+    };
+    OPTION_DEFS['frame_wj_boss_custom_喂豆位置坐标'] = {
+        type: "input",
+        inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+    };
+
+    // 魔甘相关
     OPTION_DEFS['甜薯1种植位置'] = { type: "input", inputs: [{name:"列",default:"8"},{name:"行",default:"2"}] };
     OPTION_DEFS['甜薯2种植位置'] = { type: "input", inputs: [{name:"列",default:"8"},{name:"行",default:"4"}] };
     OPTION_DEFS['飓风甘蓝1种植位置'] = { type: "input", inputs: [{name:"列",default:"7"},{name:"行",default:"2"}] };
@@ -565,24 +566,42 @@ if (typeof OPTION_DEFS === 'undefined') {
     OPTION_DEFS['魔甘前喂豆位置'] = { type: "input", inputs: [{name:"列",default:"3"},{name:"行",default:"3"}] };
     OPTION_DEFS['多少秒后种魔甘'] = { type: "input", inputs: [{name:"秒",default:"15"}] };
     OPTION_DEFS['魔甘失败后是否重开'] = { type: "switch", cases: [{name:"Yes"},{name:"No"}] };
-    // 喂豆相关输入
+
+    // 喂豆相关
     OPTION_DEFS['小关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
     OPTION_DEFS['fw_boss关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
     OPTION_DEFS['fw_boss关喂豆间隔'] = { type: "input", inputs: [{ name: "秒", default: "4" }] };
     OPTION_DEFS['是否开局喂豆球果'] = {
-    type: "switch",
-    cases: [
-        { name: "No" },
-        { name: "Yes", option: ["喂豆球果"] }
-    ]
-    };OPTION_DEFS['小关喂豆间隔'] = { type: "select", cases: [{name:"4秒"},{name:"5秒"},{name:"8秒"},{name:"16秒"},{name:"24秒"},{name:"32秒"},{name:"40秒"},{name:"60秒"},{name:"80秒"},{name:"100秒"}] };
-    OPTION_DEFS['喂豆球果'] = {
-    type: "input",
-    inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+        type: "switch",
+        cases: [
+            { name: "No" },
+            { name: "Yes", option: ["喂豆球果"] }
+        ]
     };
+    OPTION_DEFS['小关喂豆间隔'] = {
+        type: "select",
+        cases: [
+            { name: "4秒" }, { name: "5秒" }, { name: "8秒" }, { name: "16秒" },
+            { name: "24秒" }, { name: "32秒" }, { name: "40秒" }, { name: "60秒" },
+            { name: "80秒" }, { name: "100秒" }
+        ]
+    };
+    OPTION_DEFS['喂豆球果'] = {
+        type: "input",
+        inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+    };
+
     // 其他
-    OPTION_DEFS['当期无尽模式'] = { type: "select", cases: [{ name: "神秘埃及", option: ["植物配置"] }] };
-    OPTION_DEFS['植物配置'] = { type: "select", cases: [{ name: "原大桑葚", option: ["原大_小关是否抛花","原大_boss关是否需要喂豆","原大_是否需要补植物"] }] };
+    OPTION_DEFS['当期无尽模式'] = {
+        type: "select",
+        cases: [{ name: "神秘埃及", option: ["植物配置"] }]
+    };
+    OPTION_DEFS['植物配置'] = {
+        type: "select",
+        cases: [{ name: "原大桑葚", option: [
+            "原大_小关是否抛花", "原大_boss关是否需要喂豆", "原大_是否需要补植物"
+        ] }]
+    };
     OPTION_DEFS['原大_小关是否抛花'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['原大_boss关是否需要喂豆'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['原大_是否需要补植物'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
@@ -628,13 +647,11 @@ function handleMouseLeave(e) {
 
 function handleMouseMove(e) {
     if (tooltipTarget && tooltipEl.classList.contains('visible')) {
-        // 跟随鼠标移动
         tooltipEl.style.left = (e.clientX + 12) + 'px';
         tooltipEl.style.top = (e.clientY + 8) + 'px';
     }
 }
 
-// 对指定元素启用 tooltip
 function enableTooltip(el) {
     if (!el || el._tooltipEnabled) return;
     el.addEventListener('mouseenter', handleMouseEnter);
@@ -643,22 +660,18 @@ function enableTooltip(el) {
     el._tooltipEnabled = true;
 }
 
-// 批量启用
 function enableTooltips(selector) {
     document.querySelectorAll(selector).forEach(el => enableTooltip(el));
 }
 
-// 动态启用：在元素加入 DOM 后调用
 function observeNewElements() {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
                 if (node.nodeType === 1) {
-                    // 检查自身是否有 data-tooltip
                     if (node.hasAttribute && node.hasAttribute('data-tooltip')) {
                         enableTooltip(node);
                     }
-                    // 检查后代
                     node.querySelectorAll && node.querySelectorAll('[data-tooltip]').forEach(el => enableTooltip(el));
                 }
             }
@@ -701,14 +714,27 @@ function renderSlotRemarks() {
 // ============================================================
 const EARLY_CARDS = [];
 for (let i=1; i<=8; i++) EARLY_CARDS.push({ id: `card${i}`, label: `卡${i}`, type: 'card', phase: 'early', single: false, maxCount: 10 });
+
 const EARLY_GUARD = [ { id: 'guard', label: '守卫菇', type: 'guard', phase: 'early', single: false, maxCount: 5 } ];
 const EARLY_SHOVEL_BEFORE = [ { id: 'shovel_before', label: '铲子(前5)', type: 'shovel', phase: 'early', single: false, maxCount: 5 } ];
 const EARLY_SHOVEL_AFTER = [ { id: 'shovel_after', label: '铲子(后5)', type: 'shovel', phase: 'early', single: false, maxCount: 5 } ];
 const EARLY_FEED = [ { id: 'feed', label: '小关喂豆', type: 'feed', phase: 'early', single: true } ];
 const EARLY_BOSS_FEED = [ { id: 'bossfeed', label: 'Boss喂豆', type: 'bossfeed', phase: 'early', single: true } ];
 
+// 补植物操作项：卡槽2~8
 const LATE_PATCH = [];
-for (let slot=2; slot<=8; slot++) LATE_PATCH.push({ id: `patch_slot${slot}`, label: `补卡${slot}`, type: 'patch', phase: 'late', single: false, maxCount: 5, slot });
+for (let slot=2; slot<=8; slot++) {
+    LATE_PATCH.push({
+        id: `patch_slot${slot}`,
+        label: `补卡${slot}`,
+        type: 'patch',
+        phase: 'late',
+        single: false,
+        maxCount: 5,
+        slot: slot
+    });
+}
+
 const LATE_SHOVEL = [ { id: 'shovel_late', label: '铲除', type: 'shovel', phase: 'late', single: false, maxCount: 5 } ];
 const LATE_FEED = [ { id: 'feed_late', label: '小关喂豆', type: 'feed', phase: 'late', single: true } ];
 const LATE_FEED_BALL = [ { id: 'feed_ball_late', label: '喂豆球果', type: 'feed', phase: 'late', single: true } ];
@@ -723,12 +749,16 @@ const LATE_MAGIC = [
     { id: 'magicfeed', label: '魔甘前喂豆', type: 'magicfeed', phase: 'late', single: true }
 ];
 
-const ALL_OPS = [...EARLY_CARDS, ...EARLY_GUARD, ...EARLY_SHOVEL_BEFORE, ...EARLY_SHOVEL_AFTER, ...EARLY_FEED, ...EARLY_BOSS_FEED, ...LATE_PATCH, ...LATE_SHOVEL, ...LATE_FEED, ...LATE_FEED_BALL,...LATE_BOSS_FEED, ...LATE_FLOWER, ...LATE_BOSS_FLOWER, ...LATE_MAGIC];
+const ALL_OPS = [
+    ...EARLY_CARDS, ...EARLY_GUARD, ...EARLY_SHOVEL_BEFORE, ...EARLY_SHOVEL_AFTER,
+    ...EARLY_FEED, ...EARLY_BOSS_FEED,
+    ...LATE_PATCH, ...LATE_SHOVEL, ...LATE_FEED, ...LATE_FEED_BALL,
+    ...LATE_BOSS_FEED, ...LATE_FLOWER, ...LATE_BOSS_FLOWER, ...LATE_MAGIC
+];
 
 let selectedOp = null;
 let isBatchMode = true;
 
-// --- WASD 导航相关 ---
 let opItemsList = [];
 let keyboardSelectedIndex = -1;
 
@@ -869,16 +899,16 @@ function renderOps(phase) {
     LATE_PATCH.forEach(op => { const el = createOpElement(op); latePatch.appendChild(el); });
     LATE_SHOVEL.forEach(op => { const el = createOpElement(op); lateShovel.appendChild(el); });
     LATE_FEED.forEach(op => { const el = createOpElement(op); lateFeed.appendChild(el); });
-     // ===== 新增：喂豆球果 =====
+
     const lateFeedBall = document.getElementById('opLateFeedBall');
     lateFeedBall.innerHTML = '';
     LATE_FEED_BALL.forEach(op => { const el = createOpElement(op); lateFeedBall.appendChild(el); });
-    // ===== 新增结束 =====
+
     LATE_BOSS_FEED.forEach(op => { const el = createOpElement(op); lateBossFeed.appendChild(el); });
     LATE_FLOWER.forEach(op => { const el = createOpElement(op); lateFlower.appendChild(el); });
     LATE_BOSS_FLOWER.forEach(op => { const el = createOpElement(op); lateBossFlower.appendChild(el); });
     LATE_MAGIC.forEach(op => { const el = createOpElement(op); lateMagic.appendChild(el); });
-    
+
     clearSelected();
     updateSelectedUI();
     setTimeout(() => resetKeyboardNavigation(), 50);
@@ -896,7 +926,7 @@ function createOpElement(op) {
         labelText = op.label + (remark ? `(${remark})` : '');
     }
     div.textContent = labelText;
-    // 设置提示
+
     let tip = '';
     if (op.type === 'card') tip = `点击或拖拽放置卡${op.id.replace('card','')}，最多${op.maxCount}次`;
     else if (op.type === 'guard') tip = '种植守卫菇，最多5次，种完喂豆后铲掉';
@@ -931,7 +961,6 @@ function createOpElement(op) {
         this.classList.add('dragging');
     });
     div.addEventListener('dragend', function(e) { this.classList.remove('dragging'); });
-    // 启用 tooltip
     enableTooltip(div);
     return div;
 }
@@ -967,7 +996,7 @@ const SWITCH_GROUPS = {
     late: {
         switches: [
             { optionName: '小关是否喂豆', label: '小关喂豆' },
-            { optionName: '是否开局喂豆球果', label: '喂豆球果', default: 0 },   // ✅ 加在这里
+            { optionName: '是否开局喂豆球果', label: '喂豆球果', default: 0 },
             { optionName: 'fw_boss关是否需要喂豆', label: 'Boss喂豆' },
             { optionName: '小关是否加速', label: '小关加速' },
             { optionName: 'fw_boss关是否加速', label: 'Boss加速' },
@@ -987,18 +1016,17 @@ const SWITCH_GROUPS = {
             { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
             { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
             { label: '魔甘前喂豆位置', optName: '魔甘前喂豆位置', depends: '是否魔甘收尾(牢玩家专属)' },
-            { label: '喂豆球果位置', optName: '喂豆球果', depends: '是否开局喂豆球果' }   // 新增
+            { label: '喂豆球果位置', optName: '喂豆球果', depends: '是否开局喂豆球果' }
         ]
     }
 };
 
-// 联动规则
 const DEPENDENCY_RULES = {
     '识别能量花卡槽位置': { parent: '是否抛花' },
     '识别魔甘卡槽位置': { parent: '魔甘高级选项', grandparent: '是否魔甘收尾(牢玩家专属)' },
     '识别三叶草卡槽位置': { parent: '使用三叶草', grandparent: '是否魔甘收尾(牢玩家专属)' },
     '使用三叶草': { parent: '是否魔甘收尾(牢玩家专属)' },
-    '是否开局喂豆球果': { parent: '小关是否喂豆' }   // 新增
+    '是否开局喂豆球果': { parent: '小关是否喂豆' }
 };
 
 function applyDependency(optionName, checked) {
@@ -1019,6 +1047,7 @@ function renderQuickSwitches(phase) {
     container.innerHTML = '';
     const group = SWITCH_GROUPS[phase];
     if (!group) return;
+
     group.switches.forEach(item => {
         const div = document.createElement('div');
         div.className = 'sw-item';
@@ -1035,7 +1064,7 @@ function renderQuickSwitches(phase) {
             disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
         } else if (item.optionName === '识别三叶草卡槽位置') {
             disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1 || currentValues['使用三叶草']?.index !== 1);
-        } else if (item.optionName === '是否开局喂豆球果') {   // 新增
+        } else if (item.optionName === '是否开局喂豆球果') {
             disabled = (currentValues['小关是否喂豆']?.index !== 1);
         }
         cb.disabled = disabled;
@@ -1054,7 +1083,7 @@ function renderQuickSwitches(phase) {
         div.appendChild(cb);
         div.appendChild(label);
         container.appendChild(div);
-        // 提示
+
         let tip = '';
         if (item.optionName === '小关是否喂豆') tip = '开启后小关喂豆生效';
         else if (item.optionName === 'fw_boss关是否需要喂豆') tip = '开启后Boss关喂豆生效';
@@ -1230,7 +1259,7 @@ function renderRightPanelSwitches() {
         div.appendChild(label);
         div.setAttribute('data-tooltip-delay', '1000');
         container.appendChild(div);
-        // 提示与左侧相同
+
         let tip = '';
         if (item.optionName === '是否抛花') tip = '开启抛花功能';
         else if (item.optionName === '是否魔甘收尾(牢玩家专属)') tip = '开启魔甘收尾（小关喂豆将失效）';
@@ -1288,7 +1317,7 @@ function getUsedPositions(board, opId) {
 function placeOp(board, opId, r, c) {
     const opItem = ALL_OPS.find(o => o.id === opId);
     if (!opItem) return false;
-    // ===== 新增：喂豆球果依赖检查 =====
+
     if (opId === 'feed_ball_late') {
         let hasFeed = false;
         for (let rr = 0; rr < board.length; rr++) {
@@ -1305,7 +1334,6 @@ function placeOp(board, opId, r, c) {
             return false;
         }
     }
-    // ===== 检查结束 =====
 
     if (opItem.single) {
         const existing = findOpInBoard(board, opId);
@@ -1331,7 +1359,7 @@ function placeOp(board, opId, r, c) {
         currentValues['小关是否喂豆'] = { index: 1 };
         currentValues['是否开局喂豆球果'] = { index: 1 };
         currentValues['喂豆球果'] = { data: { "列": String(c + 1), "行": String(r + 1) } };
-        updatePreview();  // 刷新界面，让开关显示为勾选状态
+        updatePreview();
     }
 
     return true;
@@ -1348,7 +1376,7 @@ function renderBoard(gridId, boardData, isLate) {
         d.dataset.r = r; d.dataset.c = c;
         d.setAttribute('data-tooltip', '点击放置选中的操作，右键清空该格');
         d.setAttribute('data-tooltip-delay', '1000');
-        
+
         if (isLate && currentValues['是否魔甘收尾(牢玩家专属)']?.index === 1 && r === 2 && c === 8) {
             if (cellItems.length === 0) {
                 const tag = document.createElement('span');
@@ -1666,7 +1694,7 @@ function buildOptionNode(name) {
 }
 
 function buildFullInstance() {
-    // ===== 1. 备份用户手动控制的开关（不包括识别开关，它们由 UI 直接控制） =====
+    // ===== 1. 备份用户手动控制的开关 =====
     const userControlledKeys = [
         '是否抛花', '小关是否抛花', 'boss关是否抛花',
         '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
@@ -1729,12 +1757,14 @@ function buildFullInstance() {
     }
     currentValues['是否需要补植物'] = { index: 0 };
     for (let slot = 2; slot <= 8; slot++) {
-    currentValues[`frame_卡槽${slot}_补植物`] = { index: 0 };
-    for (let pos = 1; pos <= 5; pos++) {
-        currentValues[`frame_卡槽${slot}_${pos}`] = { index: 0 };
-        currentValues[`frame_卡槽${slot}_${pos}坐标`] = { data: {} };
+        currentValues[`frame_卡槽${slot}_补植物`] = { index: 0 };
+        const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
+        for (let pos = 1; pos <= 5; pos++) {
+            const name = `${childPrefix}${pos}`;
+            currentValues[name] = { index: 0 };
+            currentValues[`${name}坐标`] = { data: {} };
+        }
     }
-}
     currentValues['铲除植物'] = { index: 0 };
     for (let i = 1; i <= 5; i++) {
         currentValues[`铲除植物${i}`] = { index: 0 };
@@ -1755,19 +1785,14 @@ function buildFullInstance() {
     currentValues['飓风甘蓝2种植位置'] = { data: {} };
     currentValues['魔甘失败后是否重开'] = { index: 0 };
     currentValues['frame_wj_custom_从boss关选卡界面开始'] = { index: 0 };
-    // 重置 custom 喂豆开关
     currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 0 };
     currentValues['frame_wj_custom_喂豆位置'] = { index: 0 };
     currentValues['frame_wj_custom_喂豆位置坐标'] = { data: {} };
     currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 0 };
     currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 0 };
     currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
-    // 重置普通喂豆位置
     currentValues['小关喂豆位置'] = { data: {} };
     currentValues['fw_boss关喂豆位置'] = { data: {} };
-        // 重置喂豆球果相关
-    // currentValues['是否开局喂豆球果'] = { index: 0 };
-    // currentValues['喂豆球果'] = { data: {} };
 
     // ===== 4. 根据 rawOps 填充数据 =====
     // 4.1 卡槽种植
@@ -1824,32 +1849,33 @@ function buildFullInstance() {
     }
 
     // 4.4 补植物
-const patchOps = rawOps.filter(op => op.id.startsWith('patch_slot'));
-if (patchOps.length > 0) {
-    currentValues['是否需要补植物'] = { index: 1 };
-    const grouped = {};
-    patchOps.forEach(op => {
-        const slotMatch = op.id.match(/patch_slot(\d+)/);
-        if (slotMatch) {
-            const slot = parseInt(slotMatch[1]);
-            if (!grouped[slot]) grouped[slot] = [];
-            grouped[slot].push(op);
-        }
-    });
-    for (const [slot, ops] of Object.entries(grouped)) {
-        const slotNum = parseInt(slot);
-        const switchName = `frame_卡槽${slotNum}_补植物`;
-        currentValues[switchName] = { index: 1 };
-        ops.forEach(op => {
-            const pos = op.slotPos;
-            if (pos >= 1 && pos <= 5) {
-                const name = `frame_卡槽${slotNum}_${pos}`;
-                currentValues[name] = { index: 1 };
-                currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+    const patchOps = rawOps.filter(op => op.id.startsWith('patch_slot'));
+    if (patchOps.length > 0) {
+        currentValues['是否需要补植物'] = { index: 1 };
+        const grouped = {};
+        patchOps.forEach(op => {
+            const slotMatch = op.id.match(/patch_slot(\d+)/);
+            if (slotMatch) {
+                const slot = parseInt(slotMatch[1]);
+                if (!grouped[slot]) grouped[slot] = [];
+                grouped[slot].push(op);
             }
         });
+        for (const [slot, ops] of Object.entries(grouped)) {
+            const slotNum = parseInt(slot);
+            const switchName = `frame_卡槽${slotNum}_补植物`;
+            currentValues[switchName] = { index: 1 };
+            const childPrefix = (slotNum >= 7) ? `frame_卡槽${slotNum}_` : `卡槽${slotNum}_`;
+            ops.forEach(op => {
+                const pos = op.slotPos;
+                if (pos >= 1 && pos <= 5) {
+                    const name = `${childPrefix}${pos}`;
+                    currentValues[name] = { index: 1 };
+                    currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+                }
+            });
+        }
     }
-}
 
     // 4.5 铲除
     const shovelLate = rawOps.filter(op => op.id === 'shovel_late');
@@ -1864,7 +1890,7 @@ if (patchOps.length > 0) {
         });
     }
 
-    // ===== 4.6 普通开关与 custom 开关分离 =====
+    // ===== 4.6 喂豆 =====
     const allFeed = rawOps.filter(op => ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
     const feedNormal = allFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
     const bossFeedNormal = allFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
@@ -1878,10 +1904,8 @@ if (patchOps.length > 0) {
         const last = bossFeedNormal[bossFeedNormal.length - 1];
         currentValues['fw_boss关是否需要喂豆'] = { index: 1 };
         currentValues['fw_boss关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
-
     }
 
-    // Custom 开关只由前期控制
     const earlyFeed = rawOps.filter(op => op.board === 'early' && ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
     const earlyFeedSmall = earlyFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
     const earlyFeedBoss = earlyFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
@@ -1907,31 +1931,27 @@ if (patchOps.length > 0) {
         currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 0 };
         currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
     }
-        // ===== 4.6.1 后期喂豆球果 =====
-// 只根据棋盘状态控制开关，坐标由 placeOp 直接设置，不再从这里修改
-let feedBallExists = false;
-for (let r = 0; r < boardLate.length; r++) {
-    for (let c = 0; c < boardLate[r].length; c++) {
-        const cell = boardLate[r][c];
-        for (let item of cell) {
-            if (item.id === 'feed_ball_late') {
-                feedBallExists = true;
-                break;
+
+    // 4.6.1 后期喂豆球果
+    let feedBallExists = false;
+    for (let r = 0; r < boardLate.length; r++) {
+        for (let c = 0; c < boardLate[r].length; c++) {
+            const cell = boardLate[r][c];
+            for (let item of cell) {
+                if (item.id === 'feed_ball_late') {
+                    feedBallExists = true;
+                    break;
+                }
             }
+            if (feedBallExists) break;
         }
         if (feedBallExists) break;
     }
-    if (feedBallExists) break;
-}
-
-if (feedBallExists) {
-    currentValues['是否开局喂豆球果'] = { index: 1 };
-    // 坐标已在 placeOp 中设置，这里不修改
-} else {
-    currentValues['是否开局喂豆球果'] = { index: 0 };
-    // 注意：不要清空 currentValues['喂豆球果']，因为 placeOp 可能已经设置了值，且清空会导致显示为默认 1-1
-    // 如果希望清空，可以在清空格子时由其他地方处理
-}
+    if (feedBallExists) {
+        currentValues['是否开局喂豆球果'] = { index: 1 };
+    } else {
+        currentValues['是否开局喂豆球果'] = { index: 0 };
+    }
 
     // 4.7 抛花
     const flowerOps = rawOps.filter(op => op.id === 'flower');
@@ -1977,13 +1997,12 @@ if (feedBallExists) {
 
     // 4.9 自定义布阵
     currentValues['自定义布阵'] = rawOps.length > 0 ? { index: 1 } : { index: 0 };
-    // 如果用户输入了前期转后期，强制开启自定义布阵
     const returnLateVal = currentValues['frame_wj_custom_回到后期']?.data?.关卡;
     if (returnLateVal && returnLateVal.trim() !== '') {
-      currentValues['自定义布阵'] = { index: 1 };
+        currentValues['自定义布阵'] = { index: 1 };
     }
 
-    // ===== 5. 恢复用户控制的开关（不包括识别开关） =====
+    // ===== 5. 恢复用户控制的开关 =====
     const userOnlyKeys = [
         '是否抛花', '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
         '小关是否加速', 'fw_boss关是否加速',
@@ -1994,7 +2013,6 @@ if (feedBallExists) {
         currentValues[key] = backup[key] || { index: 0 };
     });
 
-    // 如果识别开关为1，强制开启父级（但识别开关本身由 UI 控制，我们保留其值）
     if (currentValues['识别能量花卡槽位置']?.index === 1) {
         currentValues['是否抛花'] = { index: 1 };
     }
@@ -2007,192 +2025,186 @@ if (feedBallExists) {
         currentValues['是否魔甘收尾(牢玩家专属)'] = { index: 1 };
     }
 
-    // ===== 6. 构建 option 树（含反转逻辑） =====
-function buildCleanNode(name) {
-    const def = OPTION_DEFS[name];
-    if (!def) return null;
-    const val = currentValues[name];
-    const node = { name };
+    // ===== 6. 构建 option 树（过滤 index:0 的普通开关） =====
+    function buildCleanNode(name) {
+        const def = OPTION_DEFS[name];
+        if (!def) return null;
+        const val = currentValues[name];
+        const node = { name };
 
-    if (def.type === 'select' || def.type === 'switch') {
-        let idx = val?.index ?? 0;
-        // 对识别开关反转索引（不包括喂豆球果）
-        const isRecog = name === '识别能量花卡槽位置' || name === '识别魔甘卡槽位置' || name === '识别三叶草卡槽位置' || name === '是否开局喂豆球果';
-        if (isRecog) {
-            idx = idx === 0 ? 1 : 0;
-        }
-        node.index = idx;
-        const cases = def.cases || [];
-        let children = [];
-
-        // 特殊处理：是否开局喂豆球果 — 如果存在坐标数据，强制添加子项
-        if (name === '是否开局喂豆球果') {
-            const coordData = currentValues['喂豆球果']?.data;
-            if (coordData && (coordData['列'] || coordData['行'])) {
-                children.push({
-                    name: '喂豆球果',
-                    data: coordData
-                });
+        if (def.type === 'select' || def.type === 'switch') {
+            let idx = val?.index ?? 0;
+            const isRecog = name === '识别能量花卡槽位置' || name === '识别魔甘卡槽位置' || name === '识别三叶草卡槽位置' || name === '是否开局喂豆球果';
+            if (isRecog) {
+                idx = idx === 0 ? 1 : 0;
             }
-        } else {
-            // 普通 switch 节点，按 cases 展开
-            if (idx < cases.length && cases[idx].option) {
-                children = cases[idx].option
-                    .map(child => buildCleanNode(child))
-                    .filter(child => child !== null);
+
+            // 普通 switch（非识别开关）且 index 为 0 → 不导出
+            if (!isRecog && idx === 0) {
+                return null;
             }
-        }
 
-        if (children.length > 0) {
-            node.sub_options = children;
-        }
-        return node;
-    } else if (def.type === 'input') {
-        const data = val?.data || {};
-        const hasData = Object.values(data).some(v => v !== '' && v !== undefined && v !== null);
-        if (!hasData) return null;
-        node.data = data;
-        return node;
-    } else if (def.type === 'checkbox') {
-        const selected = val?.selected_cases || [];
-        if (selected.length === 0) return null;
-        node.selected_cases = selected;
-        return node;
-    }
-    return null;
-}
+            node.index = idx;
+            const cases = def.cases || [];
+            let children = [];
 
-const rootNames = getRootOptionNames();
-let subOptions = rootNames
-    .map(name => buildCleanNode(name))
-    .filter(n => n !== null);
-
-// ===== 强制修复：确保自定义布阵下的 custom 子节点完整 =====
-const customNode = subOptions.find(n => n.name === '自定义布阵');
-if (customNode && customNode.sub_options) {
-    function deduplicateNodes(arr) {
-        const seen = new Set();
-        return arr.filter(node => {
-            const key = node.name;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        });
-    }
-
-    // 处理前期小关喂豆
-    const feedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_布完阵是否喂豆');
-    if (feedSwitch) {
-        if (currentValues['frame_wj_custom_布完阵是否喂豆']?.index === 1) {
-            if (!feedSwitch.sub_options) feedSwitch.sub_options = [];
-            feedSwitch.sub_options = deduplicateNodes(feedSwitch.sub_options);
-            if (!feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置')) {
-                feedSwitch.sub_options.push({
-                    name: 'frame_wj_custom_喂豆位置',
-                    index: currentValues['frame_wj_custom_喂豆位置']?.index ?? 1,
-                    sub_options: []
-                });
-            }
-            const feedPosNode = feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置');
-            if (feedPosNode) {
-                if (!feedPosNode.sub_options) feedPosNode.sub_options = [];
-                feedPosNode.sub_options = deduplicateNodes(feedPosNode.sub_options);
-                if (!feedPosNode.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置坐标')) {
-                    const coord = currentValues['frame_wj_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
-                    feedPosNode.sub_options.push({
-                        name: 'frame_wj_custom_喂豆位置坐标',
-                        data: coord
-                    });
+            if (name === '是否开局喂豆球果') {
+                const coordData = currentValues['喂豆球果']?.data;
+                if (coordData && (coordData['列'] || coordData['行'])) {
+                    children.push({ name: '喂豆球果', data: coordData });
+                }
+            } else {
+                if (idx < cases.length && cases[idx].option) {
+                    children = cases[idx].option
+                        .map(child => buildCleanNode(child))
+                        .filter(child => child !== null);
                 }
             }
-        } else {
-            feedSwitch.sub_options = [];
+
+            if (children.length > 0) {
+                node.sub_options = children;
+            }
+            return node;
+        } else if (def.type === 'input') {
+            const data = val?.data || {};
+            const hasData = Object.values(data).some(v => v !== '' && v !== undefined && v !== null);
+            if (!hasData) return null;
+            node.data = data;
+            return node;
+        } else if (def.type === 'checkbox') {
+            const selected = val?.selected_cases || [];
+            if (selected.length === 0) return null;
+            node.selected_cases = selected;
+            return node;
         }
+        return null;
     }
 
-    // 处理前期 Boss 喂豆
-    const bossFeedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_boss关是否喂豆');
-    if (bossFeedSwitch) {
-        if (currentValues['frame_wj_custom_boss关是否喂豆']?.index === 1) {
-            if (!bossFeedSwitch.sub_options) bossFeedSwitch.sub_options = [];
-            bossFeedSwitch.sub_options = deduplicateNodes(bossFeedSwitch.sub_options);
-            if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置')) {
-                bossFeedSwitch.sub_options.push({
-                    name: 'frame_wj_boss_custom_喂豆位置',
-                    index: currentValues['frame_wj_boss_custom_喂豆位置']?.index ?? 1,
-                    sub_options: []
-                });
-            }
-            const bossPosNode = bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置');
-            if (bossPosNode) {
-                if (!bossPosNode.sub_options) bossPosNode.sub_options = [];
-                bossPosNode.sub_options = deduplicateNodes(bossPosNode.sub_options);
-                if (!bossPosNode.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置坐标')) {
-                    const coord = currentValues['frame_wj_boss_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
-                    bossPosNode.sub_options.push({
-                        name: 'frame_wj_boss_custom_喂豆位置坐标',
-                        data: coord
+    const rootNames = getRootOptionNames();
+    let subOptions = rootNames
+        .map(name => buildCleanNode(name))
+        .filter(n => n !== null);
+
+    // 强制修复自定义布阵子节点
+    const customNode = subOptions.find(n => n.name === '自定义布阵');
+    if (customNode && customNode.sub_options) {
+        function deduplicateNodes(arr) {
+            const seen = new Set();
+            return arr.filter(node => {
+                const key = node.name;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        const feedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_布完阵是否喂豆');
+        if (feedSwitch) {
+            if (currentValues['frame_wj_custom_布完阵是否喂豆']?.index === 1) {
+                if (!feedSwitch.sub_options) feedSwitch.sub_options = [];
+                feedSwitch.sub_options = deduplicateNodes(feedSwitch.sub_options);
+                if (!feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置')) {
+                    feedSwitch.sub_options.push({
+                        name: 'frame_wj_custom_喂豆位置',
+                        index: currentValues['frame_wj_custom_喂豆位置']?.index ?? 1,
+                        sub_options: []
                     });
                 }
+                const feedPosNode = feedSwitch.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置');
+                if (feedPosNode) {
+                    if (!feedPosNode.sub_options) feedPosNode.sub_options = [];
+                    feedPosNode.sub_options = deduplicateNodes(feedPosNode.sub_options);
+                    if (!feedPosNode.sub_options.find(n => n.name === 'frame_wj_custom_喂豆位置坐标')) {
+                        const coord = currentValues['frame_wj_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
+                        feedPosNode.sub_options.push({
+                            name: 'frame_wj_custom_喂豆位置坐标',
+                            data: coord
+                        });
+                    }
+                }
+            } else {
+                feedSwitch.sub_options = [];
             }
-            if (currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数) {
-                if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆间隔')) {
+        }
+
+        const bossFeedSwitch = customNode.sub_options.find(n => n.name === 'frame_wj_custom_boss关是否喂豆');
+        if (bossFeedSwitch) {
+            if (currentValues['frame_wj_custom_boss关是否喂豆']?.index === 1) {
+                if (!bossFeedSwitch.sub_options) bossFeedSwitch.sub_options = [];
+                bossFeedSwitch.sub_options = deduplicateNodes(bossFeedSwitch.sub_options);
+                if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置')) {
                     bossFeedSwitch.sub_options.push({
-                        name: 'frame_wj_boss_custom_喂豆间隔',
-                        data: currentValues['frame_wj_boss_custom_喂豆间隔'].data
+                        name: 'frame_wj_boss_custom_喂豆位置',
+                        index: currentValues['frame_wj_boss_custom_喂豆位置']?.index ?? 1,
+                        sub_options: []
                     });
                 }
+                const bossPosNode = bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置');
+                if (bossPosNode) {
+                    if (!bossPosNode.sub_options) bossPosNode.sub_options = [];
+                    bossPosNode.sub_options = deduplicateNodes(bossPosNode.sub_options);
+                    if (!bossPosNode.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆位置坐标')) {
+                        const coord = currentValues['frame_wj_boss_custom_喂豆位置坐标']?.data || { "列": "1", "行": "1" };
+                        bossPosNode.sub_options.push({
+                            name: 'frame_wj_boss_custom_喂豆位置坐标',
+                            data: coord
+                        });
+                    }
+                }
+                if (currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数) {
+                    if (!bossFeedSwitch.sub_options.find(n => n.name === 'frame_wj_boss_custom_喂豆间隔')) {
+                        bossFeedSwitch.sub_options.push({
+                            name: 'frame_wj_boss_custom_喂豆间隔',
+                            data: currentValues['frame_wj_boss_custom_喂豆间隔'].data
+                        });
+                    }
+                }
+            } else {
+                bossFeedSwitch.sub_options = [];
             }
-        } else {
-            bossFeedSwitch.sub_options = [];
         }
     }
-}
 
-// ===== 强制修复识别开关节点（直接从 currentValues 读取，但已由 buildCleanNode 反转）=====
-// 由于 buildCleanNode 已包含反转，此处不再额外处理，保留原样
-
-const optionTree = {
-    name: "无尽模式",
-    index: 1,
-    sub_options: subOptions.length > 0 ? subOptions : []
-};
+    const optionTree = {
+        name: "无尽模式",
+        index: 1,
+        sub_options: subOptions.length > 0 ? subOptions : []
+    };
 
     // ===== 7. 构建最终实例 =====
     const instanceName = document.getElementById('configName').value.trim() || "无尽_前后期";
     const controller = document.getElementById('controllerName').value.trim() || "安卓端";
-    const resource = ''; // 强制设为空
     const entry = document.getElementById('taskEntry').value.trim() || "无尽挑战_前置检查";
 
     return {
-    "CurrentControllerName": controller,
-    "Resource": "",   // 空字符串
-    "CurrentTasks": [`无尽挑战（测试）<|||>${entry}`],
-    "TaskItems": [{
-        "name": "无尽挑战（测试）",
-        "entry": entry,
-        "default_check": true,
-        "option": [optionTree]
-    }],
-    "AdbDevice": {
-        "InfoHandle": { "value": 0 },
-        "Name": "模拟器",
-        "AdbPath": "adb",
-        "AdbSerial": "127.0.0.1:5555",
-        "ScreencapMethods": 64,
-        "InputMethods": 18446744073709551615,
-        "Config": "{}",
-        "AgentPath": "./MaaAgentBinary"
-    },
-    // 删除 ResourceOptionItems 字段，或者保留为空对象
-    "CurrentController": 2,
-    "RetryOnDisconnected": true,
-    "AllowAdbRestart": false,
-    "InstanceName": instanceName,
-    "ContinueRunningWhenError": true,
-    "BeforeTask": "None"
-};
+        "CurrentControllerName": controller,
+        "Resource": "",
+        "CurrentTasks": [`无尽挑战（测试）<|||>${entry}`],
+        "TaskItems": [{
+            "name": "无尽挑战（测试）",
+            "entry": entry,
+            "default_check": true,
+            "option": [optionTree]
+        }],
+        "AdbDevice": {
+            "InfoHandle": { "value": 0 },
+            "Name": "模拟器",
+            "AdbPath": "adb",
+            "AdbSerial": "127.0.0.1:5555",
+            "ScreencapMethods": 64,
+            "InputMethods": 18446744073709551615,
+            "Config": "{}",
+            "AgentPath": "./MaaAgentBinary"
+        },
+        "CurrentController": 2,
+        "RetryOnDisconnected": true,
+        "AllowAdbRestart": false,
+        "InstanceName": instanceName,
+        "ContinueRunningWhenError": true,
+        "BeforeTask": "None"
+    };
 }
+
 function updatePreview() {
     const data = buildFullInstance();
     document.getElementById('previewText').value = JSON.stringify(data, null, 2);
@@ -2200,17 +2212,14 @@ function updatePreview() {
     renderQuickSwitches(currentTab);
     updateRightPanelSwitches();
 
-    // 同步右侧“前期转后期”输入框
     const returnLateInput = document.getElementById('customReturnLate');
     if (returnLateInput) {
         const val = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
         returnLateInput.value = val;
     }
-    // ===== 新增：重建选项树，使 UI 与 currentValues 同步 =====
     const container = document.getElementById('optionTree');
     container.innerHTML = '';
     buildOptionUI(container, getRootOptionNames());
-    // ===== 新增结束 =====
 }
 
 function exportJSON() {
@@ -2262,9 +2271,7 @@ function copyPreview() {
 // 11. 初始化
 // ============================================================
 window.onload = function() {
-    // 启用静态元素的 tooltip
     enableTooltips('[data-tooltip]');
-    // 监听动态添加的元素
     observeNewElements();
 
     renderSlotRemarks();
@@ -2284,7 +2291,6 @@ window.onload = function() {
     renderRightPanelSwitches();
     updateRightPanelSwitches();
 
-    // 绑定右侧“前期转后期”输入框
     const returnLateInput = document.getElementById('customReturnLate');
     if (returnLateInput) {
         returnLateInput.value = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
