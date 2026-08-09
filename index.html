@@ -1729,10 +1729,10 @@ function buildFullInstance() {
     }
     currentValues['是否需要补植物'] = { index: 0 };
     for (let slot = 2; slot <= 8; slot++) {
-    currentValues[`卡槽${slot}_补植物`] = { index: 0 };
+    currentValues[`frame_卡槽${slot}_补植物`] = { index: 0 };
     for (let pos = 1; pos <= 5; pos++) {
-        currentValues[`卡槽${slot}_${pos}`] = { index: 0 };
-        currentValues[`卡槽${slot}_${pos}坐标`] = { data: {} };
+        currentValues[`frame_卡槽${slot}_${pos}`] = { index: 0 };
+        currentValues[`frame_卡槽${slot}_${pos}坐标`] = { data: {} };
     }
 }
     currentValues['铲除植物'] = { index: 0 };
