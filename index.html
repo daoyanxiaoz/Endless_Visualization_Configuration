@@ -285,8 +285,9 @@ if (typeof OPTION_DEFS === 'undefined') {
     cases: [
         { name: "No" },
         { name: "Yes", option: [
-            "卡槽2_补植物", "卡槽3_补植物", "卡槽4_补植物", "卡槽5_补植物",
-            "卡槽6_补植物", "卡槽7_补植物", "卡槽8_补植物",
+            "frame_卡槽2_补植物", "frame_卡槽3_补植物", "frame_卡槽4_补植物",
+            "frame_卡槽5_补植物", "frame_卡槽6_补植物", "frame_卡槽7_补植物",
+            "frame_卡槽8_补植物",
             "铲除植物"
         ] }
     ]
@@ -505,16 +506,16 @@ if (typeof OPTION_DEFS === 'undefined') {
         }
     }
     for (let slot=2; slot<=8; slot++) {
-    const switchName = `卡槽${slot}_补植物`;
+    const switchName = `frame_卡槽${slot}_补植物`;
     OPTION_DEFS[switchName] = {
         type: "switch",
         cases: [
             { name: "No" },
-            { name: "Yes", option: [`卡槽${slot}_1`,`卡槽${slot}_2`,`卡槽${slot}_3`,`卡槽${slot}_4`,`卡槽${slot}_5`] }
+            { name: "Yes", option: [`frame_卡槽${slot}_1`, `frame_卡槽${slot}_2`, `frame_卡槽${slot}_3`, `frame_卡槽${slot}_4`, `frame_卡槽${slot}_5`] }
         ]
     };
     for (let pos=1; pos<=5; pos++) {
-        const name = `卡槽${slot}_${pos}`;
+        const name = `frame_卡槽${slot}_${pos}`;
         OPTION_DEFS[name] = {
             type: "switch",
             cases: [
@@ -1828,9 +1829,13 @@ if (patchOps.length > 0) {
     currentValues['是否需要补植物'] = { index: 1 };
     const grouped = {};
     patchOps.forEach(op => {
-        const slot = op.opData.slot;
-        if (!grouped[slot]) grouped[slot] = [];
-        grouped[slot].push(op);
+        // 直接从 id 中提取卡槽号，例如 'patch_slot6' -> 6
+        const slotMatch = op.id.match(/patch_slot(\d+)/);
+        if (slotMatch) {
+            const slot = parseInt(slotMatch[1]);
+            if (!grouped[slot]) grouped[slot] = [];
+            grouped[slot].push(op);
+        }
     });
     for (const [slot, ops] of Object.entries(grouped)) {
         const slotNum = parseInt(slot);
