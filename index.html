@@ -281,15 +281,16 @@ if (typeof OPTION_DEFS === 'undefined') {
             ]
         },
         "是否需要补植物": {
-            type: "switch",
-            cases: [
-                { name: "No" },
-                { name: "Yes", option: [
-                    "卡槽2_补植物", "卡槽3_补植物", "卡槽4_补植物", "卡槽5_补植物",
-                    "铲除植物"
-                ] }
-            ]
-        },
+    type: "switch",
+    cases: [
+        { name: "No" },
+        { name: "Yes", option: [
+            "卡槽2_补植物", "卡槽3_补植物", "卡槽4_补植物", "卡槽5_补植物",
+            "卡槽6_补植物", "卡槽7_补植物", "卡槽8_补植物",
+            "铲除植物"
+        ] }
+    ]
+},
         "铲除植物": {
             type: "switch",
             cases: [
@@ -503,30 +504,30 @@ if (typeof OPTION_DEFS === 'undefined') {
             };
         }
     }
-    for (let slot=2; slot<=5; slot++) {
-        const switchName = `卡槽${slot}_补植物`;
-        OPTION_DEFS[switchName] = {
+    for (let slot=2; slot<=8; slot++) {
+    const switchName = `卡槽${slot}_补植物`;
+    OPTION_DEFS[switchName] = {
+        type: "switch",
+        cases: [
+            { name: "No" },
+            { name: "Yes", option: [`卡槽${slot}_1`,`卡槽${slot}_2`,`卡槽${slot}_3`,`卡槽${slot}_4`,`卡槽${slot}_5`] }
+        ]
+    };
+    for (let pos=1; pos<=5; pos++) {
+        const name = `卡槽${slot}_${pos}`;
+        OPTION_DEFS[name] = {
             type: "switch",
             cases: [
                 { name: "No" },
-                { name: "Yes", option: [`卡槽${slot}_1`,`卡槽${slot}_2`,`卡槽${slot}_3`,`卡槽${slot}_4`,`卡槽${slot}_5`] }
+                { name: "Yes", option: [`${name}坐标`] }
             ]
         };
-        for (let pos=1; pos<=5; pos++) {
-            const name = `卡槽${slot}_${pos}`;
-            OPTION_DEFS[name] = {
-                type: "switch",
-                cases: [
-                    { name: "No" },
-                    { name: "Yes", option: [`${name}坐标`] }
-                ]
-            };
-            OPTION_DEFS[`${name}坐标`] = {
-                type: "input",
-                inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
-            };
-        }
+        OPTION_DEFS[`${name}坐标`] = {
+            type: "input",
+            inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
+        };
     }
+}
     for (let i=1; i<=5; i++) {
         const name = `铲除植物${i}`;
         OPTION_DEFS[name] = {
@@ -706,7 +707,7 @@ const EARLY_FEED = [ { id: 'feed', label: '小关喂豆', type: 'feed', phase: '
 const EARLY_BOSS_FEED = [ { id: 'bossfeed', label: 'Boss喂豆', type: 'bossfeed', phase: 'early', single: true } ];
 
 const LATE_PATCH = [];
-for (let slot=2; slot<=5; slot++) LATE_PATCH.push({ id: `patch_slot${slot}`, label: `补卡${slot}`, type: 'patch', phase: 'late', single: false, maxCount: 5, slot });
+for (let slot=2; slot<=8; slot++) LATE_PATCH.push({ id: `patch_slot${slot}`, label: `补卡${slot}`, type: 'patch', phase: 'late', single: false, maxCount: 5, slot });
 const LATE_SHOVEL = [ { id: 'shovel_late', label: '铲除', type: 'shovel', phase: 'late', single: false, maxCount: 5 } ];
 const LATE_FEED = [ { id: 'feed_late', label: '小关喂豆', type: 'feed', phase: 'late', single: true } ];
 const LATE_FEED_BALL = [ { id: 'feed_ball_late', label: '喂豆球果', type: 'feed', phase: 'late', single: true } ];
@@ -1726,13 +1727,13 @@ function buildFullInstance() {
         currentValues[`frame_wj_custom_使用铲子${i}坐标`] = { data: {} };
     }
     currentValues['是否需要补植物'] = { index: 0 };
-    for (let slot = 2; slot <= 5; slot++) {
-        currentValues[`卡槽${slot}_补植物`] = { index: 0 };
-        for (let pos = 1; pos <= 5; pos++) {
-            currentValues[`卡槽${slot}_${pos}`] = { index: 0 };
-            currentValues[`卡槽${slot}_${pos}坐标`] = { data: {} };
-        }
+    for (let slot = 2; slot <= 8; slot++) {
+    currentValues[`卡槽${slot}_补植物`] = { index: 0 };
+    for (let pos = 1; pos <= 5; pos++) {
+        currentValues[`卡槽${slot}_${pos}`] = { index: 0 };
+        currentValues[`卡槽${slot}_${pos}坐标`] = { data: {} };
     }
+}
     currentValues['铲除植物'] = { index: 0 };
     for (let i = 1; i <= 5; i++) {
         currentValues[`铲除植物${i}`] = { index: 0 };
