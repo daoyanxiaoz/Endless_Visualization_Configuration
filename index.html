@@ -1823,29 +1823,29 @@ function buildFullInstance() {
     }
 
     // 4.4 补植物
-    const patchOps = rawOps.filter(op => op.id.startsWith('patch_slot'));
-    if (patchOps.length > 0) {
-        currentValues['是否需要补植物'] = { index: 1 };
-        const grouped = {};
-        patchOps.forEach(op => {
-            const slot = op.opData.slot;
-            if (!grouped[slot]) grouped[slot] = [];
-            grouped[slot].push(op);
+const patchOps = rawOps.filter(op => op.id.startsWith('patch_slot'));
+if (patchOps.length > 0) {
+    currentValues['是否需要补植物'] = { index: 1 };
+    const grouped = {};
+    patchOps.forEach(op => {
+        const slot = op.opData.slot;
+        if (!grouped[slot]) grouped[slot] = [];
+        grouped[slot].push(op);
+    });
+    for (const [slot, ops] of Object.entries(grouped)) {
+        const slotNum = parseInt(slot);
+        const switchName = `卡槽${slotNum}_补植物`;
+        currentValues[switchName] = { index: 1 };
+        ops.forEach(op => {
+            const pos = op.slotPos;
+            if (pos >= 1 && pos <= 5) {
+                const name = `卡槽${slotNum}_${pos}`;
+                currentValues[name] = { index: 1 };
+                currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
+            }
         });
-        for (const [slot, ops] of Object.entries(grouped)) {
-            const slotNum = parseInt(slot);
-            const switchName = `卡槽${slotNum}_补植物`;
-            currentValues[switchName] = { index: 1 };
-            ops.forEach(op => {
-                const pos = op.slotPos;
-                if (pos >= 1 && pos <= 5) {
-                    const name = `卡槽${slotNum}_${pos}`;
-                    currentValues[name] = { index: 1 };
-                    currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
-                }
-            });
-        }
     }
+}
 
     // 4.5 铲除
     const shovelLate = rawOps.filter(op => op.id === 'shovel_late');
