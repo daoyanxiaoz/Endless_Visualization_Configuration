@@ -210,6 +210,20 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
                 <div class="tab-content" id="tabLate">
                     <div id="gridLate"></div>
                 </div>
+                <div id="lateFeedIntervals" style="display:none; margin-top:10px; padding:8px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:4px;">⏱️ 后期喂豆间隔设置</div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+        <div id="lateSmallFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">小关喂豆间隔：</label>
+            <select id="lateSmallFeedIntervalSelect" style="padding:3px 8px; border:1px solid #d0d7de; border-radius:4px; font-size:12px; background:#fff;">
+            </select>
+        </div>
+        <div id="lateBossFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">Boss关喂豆间隔（秒）：</label>
+            <input type="number" id="lateBossFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1" max="10">
+        </div>
+    </div>
+</div>
                 <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:13px;">
                     <label>列数 <input type="number" id="colN" value="9" min="1" max="9" style="width:50px;" data-tooltip="调整棋盘列数（1~9）"></label>
                     <label>行数 <input type="number" id="rowN" value="5" min="1" max="5" style="width:50px;" data-tooltip="调整棋盘行数（1~5）"></label>
@@ -227,6 +241,7 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
                 </div>
                 <div class="right-controls" id="rightQuickControls"></div>
             </div>
+            <div id="teamSwitchControls" style="margin-top:8px; border-top:1px solid #e5e7eb; padding-top:8px;"></div>
         </div>
     </div>
 
@@ -606,6 +621,65 @@ if (typeof OPTION_DEFS === 'undefined') {
     OPTION_DEFS['原大_boss关是否需要喂豆'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['原大_是否需要补植物'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['刷新僵尸的类别'] = { type: "checkbox", cases: [{name:"霹雳舞僵尸"}] };
+    // ===== 补充缺失的自定义布阵相关定义 =====
+// 1. 编队切换开关及输入
+OPTION_DEFS['frame_wj_custom_前期使用编队'] = {
+    type: 'switch',
+    cases: [
+        { name: 'No' },
+        { name: 'Yes', option: ['frame_wj_custom_前期切换到第几编队'] }
+    ]
+};
+OPTION_DEFS['frame_wj_custom_前期切换到第几编队'] = {
+    type: 'input',
+    inputs: [{ name: '编队', default: '' }]
+};
+OPTION_DEFS['frame_wj_custom_回到后期切换编队'] = {
+    type: 'switch',
+    cases: [
+        { name: 'No' },
+        { name: 'Yes', option: ['frame_wj_custom_切换到第几编队'] }
+    ]
+};
+OPTION_DEFS['frame_wj_custom_切换到第几编队'] = {
+    type: 'input',
+    inputs: [{ name: '编队', default: '' }]
+};
+
+// 2. Boss 关喂豆间隔（自定义布阵下）
+OPTION_DEFS['frame_wj_boss_custom_喂豆间隔'] = {
+    type: 'input',
+    inputs: [{ name: '秒数', default: '3' }]
+};
+
+// 3. 将上述子项添加到父级 Yes 分支的 option 数组中（确保层级正确）
+// 修正 自定义布阵 的 Yes 分支
+if (OPTION_DEFS['自定义布阵']) {
+    const cases = OPTION_DEFS['自定义布阵'].cases;
+    for (let c of cases) {
+        if (c.name === 'Yes') {
+            if (!c.option) c.option = [];
+            // 添加缺失的编队开关（如果不存在）
+            ['frame_wj_custom_前期使用编队', 'frame_wj_custom_回到后期切换编队'].forEach(item => {
+                if (!c.option.includes(item)) c.option.push(item);
+            });
+            break;
+        }
+    }
+}
+// 修正 frame_wj_custom_boss关是否喂豆 的 Yes 分支
+if (OPTION_DEFS['frame_wj_custom_boss关是否喂豆']) {
+    const cases = OPTION_DEFS['frame_wj_custom_boss关是否喂豆'].cases;
+    for (let c of cases) {
+        if (c.name === 'Yes') {
+            if (!c.option) c.option = [];
+            if (!c.option.includes('frame_wj_boss_custom_喂豆间隔')) {
+                c.option.push('frame_wj_boss_custom_喂豆间隔');
+            }
+            break;
+        }
+    }
+}
 }
 
 // ============================================================
@@ -2331,6 +2405,201 @@ window.onload = function() {
     });
 
     currentValues['无尽模式'] = { index: 1 };
+    // ===== 后期喂豆间隔动态显示 =====
+function initLateFeedIntervals() {
+    const sel = document.getElementById('lateSmallFeedIntervalSelect');
+    const def = OPTION_DEFS['小关喂豆间隔'];
+    if (def && def.type === 'select') {
+        sel.innerHTML = '';
+        def.cases.forEach((c, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = c.label || c.name;
+            sel.appendChild(opt);
+        });
+        sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
+        sel.addEventListener('change', function() {
+            currentValues['小关喂豆间隔'] = { index: parseInt(this.value) };
+            updatePreview();
+        });
+    }
+    const inp = document.getElementById('lateBossFeedIntervalInput');
+    inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
+    inp.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '4';
+        if (!currentValues['fw_boss关喂豆间隔']) currentValues['fw_boss关喂豆间隔'] = { data: {} };
+        currentValues['fw_boss关喂豆间隔'].data.秒 = val;
+        updatePreview();
+    });
+}
+
+function updateLateFeedIntervalsVisibility() {
+    const container = document.getElementById('lateFeedIntervals');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'late') {
+        container.style.display = 'none';
+        return;
+    }
+    let hasSmallFeed = false;
+    let hasBossFeed = false;
+    for (let r = 0; r < boardLate.length; r++) {
+        for (let c = 0; c < boardLate[r].length; c++) {
+            const cell = boardLate[r][c];
+            for (let item of cell) {
+                if (item.id === 'feed' || item.id === 'feed_late') hasSmallFeed = true;
+                if (item.id === 'bossfeed' || item.id === 'bossfeed_late') hasBossFeed = true;
+            }
+        }
+    }
+    const shouldShow = hasSmallFeed || hasBossFeed;
+    container.style.display = shouldShow ? 'block' : 'none';
+    document.getElementById('lateSmallFeedInterval').style.display = hasSmallFeed ? 'flex' : 'none';
+    document.getElementById('lateBossFeedInterval').style.display = hasBossFeed ? 'flex' : 'none';
+    if (hasSmallFeed) {
+        const sel = document.getElementById('lateSmallFeedIntervalSelect');
+        if (sel) sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
+    }
+    if (hasBossFeed) {
+        const inp = document.getElementById('lateBossFeedIntervalInput');
+        if (inp) inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
+    }
+}
+
+// 覆盖 renderAllBoards 使其自动更新显示
+const originalRenderAllBoards = renderAllBoards;
+renderAllBoards = function() {
+    originalRenderAllBoards();
+    updateLateFeedIntervalsVisibility();
+};
+
+// Tab 切换时更新
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        setTimeout(updateLateFeedIntervalsVisibility, 50);
+    });
+});
+
+// 初始化
+initLateFeedIntervals();
+updateLateFeedIntervalsVisibility();
+// ===== 右侧编队切换控件（仅在前期棋盘显示）- 紧凑版 =====
+function renderTeamSwitchControls() {
+    const container = document.getElementById('teamSwitchControls');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'early') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const switches = [
+        { id: 'frame_wj_custom_前期使用编队', label: '前期切换编队', inputId: 'frame_wj_custom_前期切换到第几编队', icon: '🎯' },
+        { id: 'frame_wj_custom_回到后期切换编队', label: '后期切换编队', inputId: 'frame_wj_custom_切换到第几编队', icon: '🔄' }
+    ];
+
+    let html = `
+        <div style="background:#f8fafc; border-radius:8px; padding:6px 10px; margin-top:2px; border:1px solid #e2e8f0;">
+            <div style="font-size:12px; font-weight:600; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+                <span>📋</span> 编队切换
+                <span style="font-size:10px; font-weight:400; color:#94a3b8;">（仅前期）</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+    `;
+
+    switches.forEach(sw => {
+        const isChecked = currentValues[sw.id]?.index === 1;
+        const inputVal = currentValues[sw.inputId]?.data?.编队 || '';
+        const borderColor = isChecked ? '#3b82f6' : '#e2e8f0';
+        const bgColor = isChecked ? '#eff6ff' : '#ffffff';
+
+        html += `
+            <div style="display:flex; align-items:center; gap:4px; background:${bgColor}; border:1px solid ${borderColor}; border-radius:5px; padding:3px 6px; transition:all 0.2s ease;">
+                <span style="font-size:12px; line-height:1;">${sw.icon}</span>
+                <label style="font-size:12px; font-weight:500; color:#1e293b; display:flex; align-items:center; gap:4px; cursor:pointer; user-select:none; white-space:nowrap;">
+                    <input type="checkbox" id="chk_${sw.id}" ${isChecked?'checked':''} style="width:14px; height:14px; cursor:pointer; accent-color:#2d7aff; flex-shrink:0; margin:0;">
+                    ${sw.label}
+                </label>
+                <div style="display:${isChecked ? 'inline-flex' : 'none'}; align-items:center; gap:2px; margin-left:2px;">
+                    <input type="text" id="inp_${sw.inputId}" placeholder="1-6" value="${inputVal}" style="width:36px; padding:1px 2px; border:1px solid #3b82f6; border-radius:3px; font-size:11px; font-weight:500; text-align:center; background:#fff; outline:none;" />
+                    <span style="font-size:10px; color:#94a3b8;">号</span>
+                </div>
+                ${!isChecked ? `<span style="font-size:10px; color:#94a3b8; margin-left:4px;">未启用</span>` : ''}
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+    container.innerHTML = html;
+
+    switches.forEach(sw => {
+        const chk = document.getElementById(`chk_${sw.id}`);
+        const inp = document.getElementById(`inp_${sw.inputId}`);
+        if (chk) {
+            chk.addEventListener('change', function() {
+                const checked = this.checked;
+                currentValues[sw.id] = { index: checked ? 1 : 0 };
+                const parentDiv = this.closest('div[style*="display:flex"]');
+                if (checked) {
+                    if (!currentValues[sw.inputId]) currentValues[sw.inputId] = { data: {} };
+                    const inputWrapper = parentDiv.querySelector('div[style*="inline-flex"]');
+                    if (inputWrapper) {
+                        inputWrapper.style.display = 'inline-flex';
+                        const hint = parentDiv.querySelector('span:last-child');
+                        if (hint && hint.textContent === '未启用') hint.remove();
+                    }
+                    parentDiv.style.borderColor = '#3b82f6';
+                    parentDiv.style.background = '#eff6ff';
+                } else {
+                    const inputWrapper = parentDiv.querySelector('div[style*="inline-flex"]');
+                    if (inputWrapper) {
+                        inputWrapper.style.display = 'none';
+                        const existingHint = parentDiv.querySelector('span:last-child');
+                        if (!existingHint || existingHint.textContent !== '未启用') {
+                            const hint = document.createElement('span');
+                            hint.style.cssText = 'font-size:10px; color:#94a3b8; margin-left:4px;';
+                            hint.textContent = '未启用';
+                            parentDiv.appendChild(hint);
+                        }
+                    }
+                    if (currentValues[sw.inputId]) currentValues[sw.inputId].data = {};
+                    parentDiv.style.borderColor = '#e2e8f0';
+                    parentDiv.style.background = '#ffffff';
+                }
+                updatePreview();
+            });
+        }
+        if (inp) {
+            inp.addEventListener('input', function() {
+                if (!currentValues[sw.inputId]) currentValues[sw.inputId] = { data: {} };
+                currentValues[sw.inputId].data.编队 = this.value;
+                updatePreview();
+            });
+            inp.addEventListener('focus', function() { this.select(); });
+        }
+    });
+}
+
+// 在切换 Tab 时更新编队控件
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        setTimeout(renderTeamSwitchControls, 50);
+    });
+});
+
+// 在更新右侧开关时顺便更新编队控件（覆盖原有函数）
+const originalUpdateRightPanelSwitches = updateRightPanelSwitches;
+updateRightPanelSwitches = function() {
+    originalUpdateRightPanelSwitches();
+    renderTeamSwitchControls();
+};
+
+// 初始化调用
+renderTeamSwitchControls();
     loadDefaults();
 };
 </script>
