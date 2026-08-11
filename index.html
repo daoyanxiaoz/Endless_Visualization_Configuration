@@ -449,7 +449,7 @@ if (typeof OPTION_DEFS === 'undefined') {
         "刷掉僵尸": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "无尽全自动循环": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "frame_wj_custom_从boss关选卡界面开始": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
-        "frame_wj_custom_回到后期": { type: "input", inputs: [{name:"关卡",default:"3"}] },
+        "frame_wj_custom_回到后期": { type: "input", inputs: [{name:"关卡",default:""}] },
         "frame_wj_custom_布完阵是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "frame_wj_custom_boss关是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] }
     };
@@ -1015,7 +1015,10 @@ function createOpElement(op) {
     else if (op.type === 'guard') tip = '种植守卫菇，最多5次，种完喂豆后铲掉';
     else if (op.type === 'shovel' && op.id === 'shovel_before') tip = '铲除过渡植物（前5次）';
     else if (op.type === 'shovel' && op.id === 'shovel_after') tip = '铲除守卫菇（后5次）';
-    else if (op.type === 'feed' || op.type === 'bossfeed') tip = '在指定位置循环喂能量豆';
+    else if (op.id === 'feed') tip = '布完阵容后，在指定位置喂能量豆';
+    else if (op.id === 'feed_late') tip = '在指定位置循环喂能量豆';
+    else if (op.id === 'bossfeed') tip = '在指定位置循环喂能量豆';
+    else if (op.id === 'bossfeed_late') tip = '在指定位置循环喂能量豆';
     else if (op.type === 'patch') tip = `补种卡槽${op.slot}的植物，最多5次`;
     else if (op.type === 'flower') tip = '抛花收集能量豆，最多2次';
     else if (op.type === 'bossflower') tip = 'Boss关抛花，最多4次';
@@ -1786,7 +1789,7 @@ function buildFullInstance() {
         '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
         '小关是否加速', 'fw_boss关是否加速',
         'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
-        '小关是否喂豆', 'fw_boss关是否需要喂豆',
+        '小关是否喂豆', 
         '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
         '自定义布阵'
     ];
@@ -1977,46 +1980,39 @@ function buildFullInstance() {
     }
 
     // ===== 4.6 喂豆 =====
-    const allFeed = rawOps.filter(op => ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
-    const feedNormal = allFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
-    const bossFeedNormal = allFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
+// 后期小关喂豆 (feed_late) → 控制 小关是否喂豆
+const lateFeedNormal = rawOps.filter(op => op.id === 'feed_late');
+if (lateFeedNormal.length > 0) {
+    const last = lateFeedNormal[lateFeedNormal.length - 1];
+    currentValues['小关是否喂豆'] = { index: 1 };
+    currentValues['小关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
+}
 
-    if (feedNormal.length > 0) {
-        const last = feedNormal[feedNormal.length - 1];
-        currentValues['小关是否喂豆'] = { index: 1 };
-        currentValues['小关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
-    }
-    if (bossFeedNormal.length > 0) {
-        const last = bossFeedNormal[bossFeedNormal.length - 1];
-        currentValues['fw_boss关是否需要喂豆'] = { index: 1 };
-        currentValues['fw_boss关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
-    }
+// 后期Boss喂豆 (bossfeed_late) → 控制 fw_boss关是否需要喂豆
+const lateBossFeedNormal = rawOps.filter(op => op.id === 'bossfeed_late');
+if (lateBossFeedNormal.length > 0) {
+    const last = lateBossFeedNormal[lateBossFeedNormal.length - 1];
+    currentValues['fw_boss关是否需要喂豆'] = { index: 1 };
+    currentValues['fw_boss关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
+}
 
-    const earlyFeed = rawOps.filter(op => op.board === 'early' && ['feed','feed_late','bossfeed','bossfeed_late'].includes(op.id));
-    const earlyFeedSmall = earlyFeed.filter(op => op.id === 'feed' || op.id === 'feed_late');
-    const earlyFeedBoss = earlyFeed.filter(op => op.id === 'bossfeed' || op.id === 'bossfeed_late');
+// 前期小关喂豆 (feed, board === 'early') → 控制 frame_wj_custom_布完阵是否喂豆
+const earlyFeedSmall = rawOps.filter(op => op.id === 'feed' && op.board === 'early');
+if (earlyFeedSmall.length > 0) {
+    const last = earlyFeedSmall[earlyFeedSmall.length - 1];
+    currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 1 };
+    currentValues['frame_wj_custom_喂豆位置'] = { index: 1 };
+    currentValues['frame_wj_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
+}
 
-    if (earlyFeedSmall.length > 0) {
-        const last = earlyFeedSmall[earlyFeedSmall.length - 1];
-        currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 1 };
-        currentValues['frame_wj_custom_喂豆位置'] = { index: 1 };
-        currentValues['frame_wj_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
-    } else {
-        currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 0 };
-        currentValues['frame_wj_custom_喂豆位置'] = { index: 0 };
-        currentValues['frame_wj_custom_喂豆位置坐标'] = { data: {} };
-    }
-
-    if (earlyFeedBoss.length > 0) {
-        const last = earlyFeedBoss[earlyFeedBoss.length - 1];
-        currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 1 };
-        currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 1 };
-        currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
-    } else {
-        currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 0 };
-        currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 0 };
-        currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
-    }
+// 前期Boss喂豆 (bossfeed, board === 'early') → 控制 frame_wj_custom_boss关是否喂豆
+const earlyBossFeed = rawOps.filter(op => op.id === 'bossfeed' && op.board === 'early');
+if (earlyBossFeed.length > 0) {
+    const last = earlyBossFeed[earlyBossFeed.length - 1];
+    currentValues['frame_wj_custom_boss关是否喂豆'] = { index: 1 };
+    currentValues['frame_wj_boss_custom_喂豆位置'] = { index: 1 };
+    currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: { "列": String(last.col), "行": String(last.row) } };
+}
 
     // 4.6.1 后期喂豆球果
     let feedBallExists = false;
@@ -2082,11 +2078,25 @@ function buildFullInstance() {
     }
 
     // 4.9 自定义布阵
-    currentValues['自定义布阵'] = rawOps.length > 0 ? { index: 1 } : { index: 0 };
-    const returnLateVal = currentValues['frame_wj_custom_回到后期']?.data?.关卡;
-    if (returnLateVal && returnLateVal.trim() !== '') {
-        currentValues['自定义布阵'] = { index: 1 };
+// 检查前期棋盘是否有任何操作
+let hasEarlyOps = false;
+for (let r = 0; r < boardEarly.length; r++) {
+    for (let c = 0; c < boardEarly[r].length; c++) {
+        if (boardEarly[r][c].length > 0) {
+            hasEarlyOps = true;
+            break;
+        }
     }
+    if (hasEarlyOps) break;
+}
+
+// 只有前期有操作，或者手动输入了回到后期关卡时，才开启自定义布阵
+let shouldEnableCustom = hasEarlyOps;
+const returnLateVal = currentValues['frame_wj_custom_回到后期']?.data?.关卡;
+if (returnLateVal && returnLateVal.trim() !== '') {
+    shouldEnableCustom = true;
+}
+currentValues['自定义布阵'] = shouldEnableCustom ? { index: 1 } : { index: 0 };
 
     // ===== 5. 恢复用户控制的开关 =====
     const userOnlyKeys = [
@@ -2094,7 +2104,7 @@ function buildFullInstance() {
         '小关是否加速', 'fw_boss关是否加速',
         'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
         '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
-        'fw_boss关是否需要喂豆'
+        
     ];
     userOnlyKeys.forEach(key => {
         currentValues[key] = backup[key] || { index: 0 };
