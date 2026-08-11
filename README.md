@@ -1,371 +1,371 @@
-无尽通用框架 - 可视化布阵配置工具
-技术文档（v2.0）
-1. 项目概述
-1.1 项目目标
-开发一个基于 HTML/CSS/JavaScript 的可视化工具，用于生成 MaaFramework 的 interface.json 中的 option 配置。用户通过拖拽或点击在棋盘上布置植物操作，工具自动生成对应的开关和坐标配置，最终导出可直接放入 config/instances 的完整实例 JSON。
+MaaPvz 无尽通用框架 - 可视化配置工具 完整开发技能文档
+版本：v2.0（最终版）
+更新日期：2026-08-11
+适用范围：为 MaaFramework 的无尽模式生成自定义布阵配置的 HTML 工具，支持前后期双棋盘、拖拽布阵、智能开关联动及完整 JSON 导出。
 
-1.2 核心功能
-双棋盘布阵：支持前期（Early）和后期（Late）两个独立 9×5 棋盘，可分别配置不同阶段的植物布局。
+📌 项目背景与目标
+原项目提供了一个单页 HTML 工具，用于通过可视化方式生成 MaaFramework 的 interface.json 中的 option 配置。但在实际使用中，发现以下功能缺失或交互不理想：
 
-拖拽式操作：用户从左侧操作列表中拖拽或点击选中操作项，然后点击棋盘格子放置，支持批量放置模式。
+缺失部分 Option 定义（编队切换、自定义 Boss 喂豆间隔等）。
 
-智能开关联动：棋盘上的操作自动控制对应的 MaaFW Option 开关（如卡槽种植、守卫菇、喂豆、抛花等），未布置的操作开关自动关闭。
+后期喂豆间隔设置不够显眼，用户不易找到。
 
-完整配置导出：导出 JSON 包含 CurrentTasks、TaskItems、option 树、AdbDevice 等完整字段，满足 MaaFramework 实例要求。
+前期的自定义 Boss 喂豆间隔没有独立显示，且与后期共用导致混淆。
 
-UI 辅助：提供快捷开关、卡槽备注、前期转后期输入框、选项树预览、悬停提示系统等。
+编队切换控件 UI 简陋，不够美观且操作不便。
 
-1.3 适用场景
-为 MaaFramework 的“无尽模式”任务生成自定义布阵配置。
+前后期 Boss 喂豆开关相互干扰——开启前期自定义 Boss 喂豆会导致后期的通用 Boss 喂豆也被自动开启。
 
-需要精细化控制植物种植位置、喂豆、抛花、魔甘收尾等操作的场景。
+本次开发任务即针对上述问题进行系统性修复和增强，最终得到一个功能完整、交互友好、符合 MaaFramework Option 协议的可视化配置工具。
 
-适合需要快速调整布局并导出配置的无尽模式玩家。
+📁 最终文件结构
+index.html – 完整的单页面应用，包含 HTML + CSS + JavaScript。
 
-2. 技术栈与依赖
-HTML/CSS：纯原生，无外部依赖，自适应布局。
+无外部依赖，所有逻辑、样式、定义均内联。
 
-JavaScript：原生 ES6，无框架，所有逻辑集中在一个页面。
+🔧 修改内容逐项详解
+1. 补充缺失的 OPTION_DEFS 定义
+问题：frame_custom.json 中定义的 自定义布阵 的子项（编队切换、Boss 喂豆间隔）在 HTML 的 OPTION_DEFS 中缺失，导致选项树无法生成这些节点。
 
-MaaFramework：配置输出格式符合 interface.json 的 Option 协议（v2.3.0+）。
-
-浏览器：现代浏览器（Chrome/Firefox/Edge）均可运行。
-
-3. 目录结构与核心模块
-整个工具是一个单页面 HTML 文件，结构如下：
-
-text
-无尽配置.html
-├── HTML 结构
-│   ├── 工具栏 (实例名称、文件名、控制器、资源、入口、导出/默认/复制按钮)
-│   ├── 左侧面板
-│   │   ├── 卡槽备注 (8个输入框)
-│   │   ├── 操作项列表 (前期/后期分组，含卡片、守卫菇、铲子、喂豆、抛花、魔甘等)
-│   │   ├── 快捷开关与批量放置 (开关组 + 坐标输入)
-│   │   └── 无尽选项树 (只读预览，显示完整 Option 层级)
-│   ├── 右侧面板
-│   │   ├── 双棋盘 (前期/后期切换)
-│   │   ├── 棋盘控制 (列/行调整、重置)
-│   │   ├── 前期转后期输入框 (显眼黄色区域)
-│   │   └── 右侧快速控制 (常用开关)
-│   └── 预览区 (只读 JSON 预览 + 状态消息)
-├── CSS 样式 (内联)
-└── JavaScript 逻辑
-    ├── OPTION_DEFS (完整配置定义)
-    ├── 操作项定义 (EARLY_*, LATE_*)
-    ├── Tooltip 系统 (全局悬停提示)
-    ├── 棋盘数据管理 (boardEarly/boardLate)
-    ├── UI 渲染 (渲染操作项、棋盘、快捷开关、选项树)
-    ├── 核心导出函数 (buildFullInstance)
-    ├── 辅助功能 (复制、加载默认、重置)
-    └── 事件绑定 (拖拽、点击、键盘导航、Tooltip)
-4. 核心数据结构
-4.1 OPTION_DEFS
-这是整个工具的配置核心，描述了所有 MaaFW Option 的定义，包括类型、子选项和默认值。工具根据此定义生成选项树、校验用户输入和构建导出 JSON。
-
-结构示例：
+解决：在 window.OPTION_DEFS 对象末尾（紧接原有定义之后）添加以下代码：
 
 javascript
-"是否抛花": {
-    type: "switch",
+// 1. 编队切换开关及输入
+OPTION_DEFS['frame_wj_custom_前期使用编队'] = {
+    type: 'switch',
     cases: [
-        { name: "No" },
-        { name: "Yes", option: ["小关是否抛花", "boss关是否抛花", "识别能量花卡槽位置"] }
+        { name: 'No' },
+        { name: 'Yes', option: ['frame_wj_custom_前期切换到第几编队'] }
     ]
+};
+OPTION_DEFS['frame_wj_custom_前期切换到第几编队'] = {
+    type: 'input',
+    inputs: [{ name: '编队', default: '' }]
+};
+OPTION_DEFS['frame_wj_custom_回到后期切换编队'] = {
+    type: 'switch',
+    cases: [
+        { name: 'No' },
+        { name: 'Yes', option: ['frame_wj_custom_切换到第几编队'] }
+    ]
+};
+OPTION_DEFS['frame_wj_custom_切换到第几编队'] = {
+    type: 'input',
+    inputs: [{ name: '编队', default: '' }]
+};
+
+// 2. Boss 关喂豆间隔（自定义布阵下）
+OPTION_DEFS['frame_wj_boss_custom_喂豆间隔'] = {
+    type: 'input',
+    inputs: [{ name: '秒数', default: '3' }]
+};
+
+// 3. 将上述子项添加到父级 Yes 分支的 option 数组中（确保层级正确）
+if (OPTION_DEFS['自定义布阵']) {
+    const cases = OPTION_DEFS['自定义布阵'].cases;
+    for (let c of cases) {
+        if (c.name === 'Yes') {
+            if (!c.option) c.option = [];
+            ['frame_wj_custom_前期使用编队', 'frame_wj_custom_回到后期切换编队'].forEach(item => {
+                if (!c.option.includes(item)) c.option.push(item);
+            });
+            break;
+        }
+    }
 }
-注意事项：
+if (OPTION_DEFS['frame_wj_custom_boss关是否喂豆']) {
+    const cases = OPTION_DEFS['frame_wj_custom_boss关是否喂豆'].cases;
+    for (let c of cases) {
+        if (c.name === 'Yes') {
+            if (!c.option) c.option = [];
+            if (!c.option.includes('frame_wj_boss_custom_喂豆间隔')) {
+                c.option.push('frame_wj_boss_custom_喂豆间隔');
+            }
+            break;
+        }
+    }
+}
+说明：这确保了 自定义布阵 的 Yes 分支下会出现 frame_wj_custom_前期使用编队 和 frame_wj_custom_回到后期切换编队 两个开关，并且各自的 Yes 分支会引出对应的编队编号输入框；同时，frame_wj_custom_boss关是否喂豆 的 Yes 分支会包含 frame_wj_boss_custom_喂豆间隔 输入。
 
-switch 类型的 cases 顺序影响 UI 中的 index 映射，一般 No 在前（index:0），Yes 在后（index:1），但三个“识别”开关在导出时会反转（见后文）。
+2. 后期喂豆间隔动态显示（棋盘下方）
+问题：后期喂豆间隔（小关和 Boss）只藏在选项树中，用户不易找到。希望在切换到后期 Tab 且棋盘上有相应喂豆操作时，在棋盘下方显眼显示。
 
-input 类型需定义 inputs 数组，每个对象有 name 和 default，导出时作为 data 对象。
+解决：
 
-select 类型用于枚举选择，其 cases 中的 option 数组表示子选项。
-
-动态生成：代码中通过循环自动生成了大量子选项（如 卡X种植、卡X种第Y次、卡X种第Y次坐标），减少手工维护。
-
-4.2 操作项定义 (ALL_OPS)
-所有可拖拽/点击放置的操作项，包括前期和后期分类。每个操作项包含：
-
-id：唯一标识
-
-label：显示名称
-
-type：用于标签样式和逻辑分类（如 card, guard, feed, flower, sweet 等）
-
-phase：early 或 late
-
-single：布尔值，true 表示只能放置一次（如喂豆），false 可放置多次
-
-maxCount：最大放置次数（仅当 single=false 时有效）
-
-slot（可选）：用于补植物操作，表示卡槽编号
-
-扩展新操作：在对应的数组（如 EARLY_CARDS）中添加新对象即可。
-
-4.3 棋盘数据 (boardEarly, boardLate)
-每个棋盘是一个二维数组 [rows][cols]，每个格子是一个数组，存储放置在该位置的操作项对象。每个操作项包含：
-
-id：操作项 ID
-
-label：显示标签（可能包含序号）
-
-type：操作类型
-
-col：列坐标（1-based）
-
-row：行坐标（1-based）
-
-slotPos：同一操作的第几次放置（从1开始）
-
-opData：指向 ALL_OPS 中对应对象的引用
-
-5. 详细功能模块
-5.1 工具栏
-配置名称 (#configName)：导出 JSON 中的 InstanceName 字段。
-
-文件名 (#fileName)：下载的文件名（不含 .json）。
-
-控制器 (#controllerName)：对应 CurrentControllerName。
-
-资源 (#resourceName)：对应 Resource 字段（当前强制为空字符串）。
-
-入口 (#taskEntry)：对应任务的 entry 节点。
-
-导出 JSON：调用 exportJSON() 下载文件。
-
-默认选项：重置所有状态到默认值。
-
-复制：复制预览区 JSON 到剪贴板。
-
-所有输入框和按钮都带有悬停提示（Tooltip），方便了解用途。
-
-5.2 左侧面板
-卡槽备注
-提供 8 个输入框，用于给卡槽（卡1~卡8）添加备注。备注会显示在对应卡槽操作项的名称旁（如 卡1(备注)），并影响导出时的显示。
-
-操作项列表
-按“前期”和“后期”分组显示，每个操作项可拖拽或点击选中。选中后点击棋盘格子即可放置（批量模式下连续放置，否则放置后取消选中）。操作项支持键盘导航（W/S 移动选择，A/D 切换前后期）。
-
-每个操作项自带悬停提示，说明其用途和最大次数。
-
-快捷开关与批量放置
-批量放置 (#batchMode)：勾选后，放置操作不取消选中，可连续放置多个同种操作。
-
-快捷开关：根据当前选中的 Tab（前期/后期）显示对应的开关（如小关喂豆、Boss喂豆、加速等），用于快速开启/关闭总开关，并自动联动依赖关系（如开启“识别能量花”会自动打开“是否抛花”）。
-
-坐标输入：为喂豆位置等提供列-行输入框，依赖对应的开关是否启用（未启用时灰显）。
-
-无尽选项树（只读预览）
-基于 OPTION_DEFS 和 currentValues 构建的完整选项树，实时反映当前配置，便于用户预览结构。所有控件（radio、select、input、checkbox）都带有悬停提示。
-
-5.3 右侧面板
-布阵棋盘
-前期/后期 Tab：切换显示不同棋盘，同时切换左侧操作项列表和快捷开关。
-
-网格：默认 9×5，可调整尺寸（列 1~9，行 1~5）。每个格子可放置多个操作项，并显示彩色标签。
-
-操作：点击放置（需选中操作项）、右键清空格子、拖拽操作项到格子。
-
-魔音占位：若后期魔甘开启且格子 (9,3) 为空，自动显示“魔音(9-3)”占位标签，提示用户该位置会被魔音占据。
-
-棋盘控制
-列数/行数：调整棋盘尺寸，点击“应用”生效，已布置的操作会尽量保留在新尺寸内。
-
-重置前期/后期：清空对应棋盘所有操作（需确认）。
-
-前期转后期输入框（显眼黄色区域）
-输入数字后自动设置 frame_wj_custom_回到后期 的 关卡 值，并强制开启 自定义布阵 父开关，使脚本在指定关卡退出自定义布阵，恢复普通流程。支持合法性校验（1~149且非5的倍数）。
-
-右侧快速控制
-显示常用开关（抛花、魔甘、加速、智能补给等），与左侧快捷开关联动，方便快速调整。
-
-5.4 预览与导出
-预览区显示当前构建的完整 JSON，只读，可手动复制或通过“复制”按钮复制。点击“导出 JSON”下载为 .json 文件。
-
-5.5 悬停提示系统（Tooltip）
-这是本工具的重要辅助功能，帮助用户快速了解每个控件的用途。
-
-全局机制：所有带有 data-tooltip 属性的元素，在鼠标悬停一定时间后显示提示框。
-
-延迟控制：默认延迟 500ms（可通过修改 handleMouseEnter 中的值调整），但可通过 data-tooltip-delay 属性单独指定延迟（单位毫秒）。例如棋盘格子使用了 data-tooltip-delay="1000" 实现 1 秒延迟。
-
-动态绑定：对于动态生成的元素（如操作项、快捷开关、选项树控件），在创建时通过 setAttribute('data-tooltip', tip) 和 enableTooltip(el) 绑定事件。
-
-提示内容：提供清晰、简洁的功能说明，包含依赖关系、注意事项等。
-
-样式：深色半透明背景，白色文字，圆角边框，跟随鼠标移动，不遮挡操作。
-
-6. 核心逻辑详解
-6.1 放置逻辑 (placeOp)
+HTML 新增（位于 <div class="tab-content" id="tabLate"> 内的 gridLate 之后）：
+html
+<div id="lateFeedIntervals" style="display:none; margin-top:10px; padding:8px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:4px;">⏱️ 后期喂豆间隔设置</div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+        <div id="lateSmallFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">小关喂豆间隔：</label>
+            <select id="lateSmallFeedIntervalSelect" style="padding:3px 8px; border:1px solid #d0d7de; border-radius:4px; font-size:12px; background:#fff;">
+            </select>
+        </div>
+        <div id="lateBossFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">Boss关喂豆间隔（秒）：</label>
+            <input type="number" id="lateBossFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1" max="10">
+        </div>
+    </div>
+</div>
+JavaScript 新增（位于 window.onload 内，在 loadDefaults(); 之前）：
 javascript
-function placeOp(board, opId, r, c) {
-    // 1. 查找操作定义
-    // 2. 如果是单次操作 (single=true)，移除旧位置
-    // 3. 如果是多次操作，检查是否已达最大次数 (maxCount)
-    // 4. 分配 slotPos（第几次放置），用于区分同一操作的多个实例
-    // 5. 构造操作数据并推入棋盘格子
-    // 6. 返回是否成功
+// 后期喂豆间隔动态显示
+function initLateFeedIntervals() {
+    const sel = document.getElementById('lateSmallFeedIntervalSelect');
+    const def = OPTION_DEFS['小关喂豆间隔'];
+    if (def && def.type === 'select') {
+        sel.innerHTML = '';
+        def.cases.forEach((c, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = c.label || c.name;
+            sel.appendChild(opt);
+        });
+        sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
+        sel.addEventListener('change', function() {
+            currentValues['小关喂豆间隔'] = { index: parseInt(this.value) };
+            updatePreview();
+        });
+    }
+    const inp = document.getElementById('lateBossFeedIntervalInput');
+    inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
+    inp.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '4';
+        if (!currentValues['fw_boss关喂豆间隔']) currentValues['fw_boss关喂豆间隔'] = { data: {} };
+        currentValues['fw_boss关喂豆间隔'].data.秒 = val;
+        updatePreview();
+    });
 }
-6.2 导出逻辑 (buildFullInstance)
-这是最重要的函数，负责将当前 UI 状态转换为 MaaFW 实例 JSON。流程如下：
 
-备份用户开关：保存所有用户手动控制的开关（如抛花、魔甘、加速等），不包括识别开关（它们由 UI 直接控制）。
+function updateLateFeedIntervalsVisibility() {
+    const container = document.getElementById('lateFeedIntervals');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'late') {
+        container.style.display = 'none';
+        return;
+    }
+    let hasSmallFeed = false;
+    let hasBossFeed = false;
+    for (let r = 0; r < boardLate.length; r++) {
+        for (let c = 0; c < boardLate[r].length; c++) {
+            const cell = boardLate[r][c];
+            for (let item of cell) {
+                if (item.id === 'feed' || item.id === 'feed_late') hasSmallFeed = true;
+                if (item.id === 'bossfeed' || item.id === 'bossfeed_late') hasBossFeed = true;
+            }
+        }
+    }
+    const shouldShow = hasSmallFeed || hasBossFeed;
+    container.style.display = shouldShow ? 'block' : 'none';
+    document.getElementById('lateSmallFeedInterval').style.display = hasSmallFeed ? 'flex' : 'none';
+    document.getElementById('lateBossFeedInterval').style.display = hasBossFeed ? 'flex' : 'none';
+    if (hasSmallFeed) {
+        const sel = document.getElementById('lateSmallFeedIntervalSelect');
+        if (sel) sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
+    }
+    if (hasBossFeed) {
+        const inp = document.getElementById('lateBossFeedIntervalInput');
+        if (inp) inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
+    }
+}
+// 随后在 renderAllBoards 和 Tab 切换中调用 updateLateFeedIntervalsVisibility()
+说明：该区域只在后期 Tab 且棋盘上有小关喂豆或 Boss 喂豆操作时显示，控件修改会实时更新 currentValues 并刷新预览。
 
-提取棋盘操作：遍历棋盘，提取所有有坐标的操作项，存储到 rawOps 数组。
+3. 前期自定义 Boss 喂豆间隔动态显示（棋盘下方）
+问题：前期（自定义布阵）的 Boss 喂豆间隔（frame_wj_boss_custom_喂豆间隔）没有独立的显示位置，且与后期的间隔输入混在一起。
 
-重置所有棋盘驱动的开关：将所有可能由棋盘控制的开关（卡槽种植、守卫菇、铲子、补植物、铲除、喂豆、抛花、魔甘等）重置为关闭状态（index:0），并清空坐标数据。
+解决：在前期棋盘下方添加独立区域，显示条件为棋盘上有 Boss 喂豆操作（不依赖开关状态），只显示一个输入框（秒数）。
 
-填充数据：根据 rawOps 重新开启对应的开关，并填充坐标。
+HTML 新增（位于 <div class="tab-content" id="tabEarly"> 内的 gridEarly 之后）：
+html
+<div id="earlyFeedIntervals" style="display:none; margin-top:10px; padding:8px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:4px;">⏱️ 前期自定义Boss喂豆间隔设置</div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+        <div id="earlyBossFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">Boss关喂豆间隔（秒）：</label>
+            <input type="number" id="earlyBossFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1" max="10">
+        </div>
+    </div>
+</div>
+JavaScript 新增（与后期逻辑类似，但独立处理）：
+javascript
+function initEarlyFeedIntervals() {
+    const inp = document.getElementById('earlyBossFeedIntervalInput');
+    inp.value = currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数 || '3';
+    inp.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '3';
+        if (!currentValues['frame_wj_boss_custom_喂豆间隔']) {
+            currentValues['frame_wj_boss_custom_喂豆间隔'] = { data: {} };
+        }
+        currentValues['frame_wj_boss_custom_喂豆间隔'].data.秒数 = val;
+        updatePreview();
+    });
+}
 
-卡槽种植：按卡槽分组，开启 卡X种植 和各个 卡X种第Y次 及其坐标。
+function updateEarlyFeedIntervalsVisibility() {
+    const container = document.getElementById('earlyFeedIntervals');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'early') {
+        container.style.display = 'none';
+        return;
+    }
+    let hasBossFeed = false;
+    for (let r = 0; r < boardEarly.length; r++) {
+        for (let c = 0; c < boardEarly[r].length; c++) {
+            const cell = boardEarly[r][c];
+            for (let item of cell) {
+                if (item.id === 'bossfeed' || item.id === 'bossfeed_late') {
+                    hasBossFeed = true;
+                    break;
+                }
+            }
+            if (hasBossFeed) break;
+        }
+        if (hasBossFeed) break;
+    }
+    container.style.display = hasBossFeed ? 'block' : 'none';
+    if (hasBossFeed) {
+        const inp = document.getElementById('earlyBossFeedIntervalInput');
+        if (inp) inp.value = currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数 || '3';
+    }
+}
+// 在 renderAllBoards 和 Tab 切换中同时调用 updateEarlyFeedIntervalsVisibility
+说明：此区域与后期独立，修改 frame_wj_boss_custom_喂豆间隔，不影响后期的 fw_boss关喂豆间隔。
 
-守卫菇：开启 frame_wj_custom_是否种守卫菇 和各个位置子开关。
+4. 美化编队切换控件（右侧）
+问题：前期棋盘下的编队切换控件样式简陋，字体小，交互反馈不明显。
 
-铲子：区分前后两组（铲1~5 和 铲6~10）。
+解决：重新设计 renderTeamSwitchControls 函数，采用卡片式布局，加入图标、颜色反馈、更大的复选框和输入框。
 
-补植物：按卡槽和位置开启。
-
-铲除：开启 铲除植物 及各个子项。
-
-喂豆：分别处理普通喂豆和 Boss 喂豆，并填充位置。
-
-抛花：根据是否存在操作，开启对应的子开关并填充坐标。
-
-魔甘：根据是否存在甜薯、甘蓝、魔甘喂豆等操作，开启对应输入并填充坐标。
-
-自定义布阵：若棋盘非空或用户输入了“前期转后期”，则开启。
-
-恢复用户开关：将备份的用户开关（除识别开关外）恢复，确保用户手动设置不被覆盖。
-
-构建选项树：递归遍历 OPTION_DEFS，根据 currentValues 生成树形结构，并应用识别开关的反转逻辑（勾选时导出 0，未勾选导出 1）。
-
-组装最终实例：包含 CurrentControllerName、Resource（空）、CurrentTasks、TaskItems、AdbDevice 等。
-
-6.3 识别开关反转逻辑
-三个识别开关（识别能量花卡槽位置、识别魔甘卡槽位置、识别三叶草卡槽位置）在 OPTION_DEFS 中定义为 cases: [{name:"No"},{name:"Yes"}]，UI 中勾选对应 index===1。但 MaaFramework 的预期行为是：勾选表示“不识别”，未勾选表示“识别”，因此在导出时对这三个开关进行反转：
+最终版本（紧凑美化版）代码如下（完整替换原函数）：
 
 javascript
-const isRecog = name === '识别能量花卡槽位置' || name === '识别魔甘卡槽位置' || name === '识别三叶草卡槽位置';
-if (isRecog) {
-    idx = idx === 0 ? 1 : 0;
+function renderTeamSwitchControls() {
+    const container = document.getElementById('teamSwitchControls');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'early') {
+        container.innerHTML = '';
+        return;
+    }
+    const switches = [
+        { id: 'frame_wj_custom_前期使用编队', label: '前期切换编队', inputId: 'frame_wj_custom_前期切换到第几编队', icon: '🎯' },
+        { id: 'frame_wj_custom_回到后期切换编队', label: '后期切换编队', inputId: 'frame_wj_custom_切换到第几编队', icon: '🔄' }
+    ];
+    let html = `
+        <div style="background:#f8fafc; border-radius:8px; padding:6px 10px; margin-top:2px; border:1px solid #e2e8f0;">
+            <div style="font-size:12px; font-weight:600; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+                <span>📋</span> 编队切换
+                <span style="font-size:10px; font-weight:400; color:#94a3b8;">（仅前期）</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+    `;
+    switches.forEach(sw => {
+        const isChecked = currentValues[sw.id]?.index === 1;
+        const inputVal = currentValues[sw.inputId]?.data?.编队 || '';
+        const borderColor = isChecked ? '#3b82f6' : '#e2e8f0';
+        const bgColor = isChecked ? '#eff6ff' : '#ffffff';
+        html += `
+            <div style="display:flex; align-items:center; gap:4px; background:${bgColor}; border:1px solid ${borderColor}; border-radius:5px; padding:3px 6px; transition:all 0.2s ease;">
+                <span style="font-size:12px; line-height:1;">${sw.icon}</span>
+                <label style="font-size:12px; font-weight:500; color:#1e293b; display:flex; align-items:center; gap:4px; cursor:pointer; user-select:none; white-space:nowrap;">
+                    <input type="checkbox" id="chk_${sw.id}" ${isChecked?'checked':''} style="width:14px; height:14px; cursor:pointer; accent-color:#2d7aff; flex-shrink:0; margin:0;">
+                    ${sw.label}
+                </label>
+                <div style="display:${isChecked ? 'inline-flex' : 'none'}; align-items:center; gap:2px; margin-left:2px;">
+                    <input type="text" id="inp_${sw.inputId}" placeholder="1-6" value="${inputVal}" style="width:36px; padding:1px 2px; border:1px solid #3b82f6; border-radius:3px; font-size:11px; font-weight:500; text-align:center; background:#fff; outline:none;" />
+                    <span style="font-size:10px; color:#94a3b8;">号</span>
+                </div>
+                ${!isChecked ? `<span style="font-size:10px; color:#94a3b8; margin-left:4px;">未启用</span>` : ''}
+            </div>
+        `;
+    });
+    html += `</div></div>`;
+    container.innerHTML = html;
+    // 绑定事件（略，详见源码）
 }
-6.4 前期转后期联动
-用户在右侧输入框中输入数字后，会写入 currentValues['frame_wj_custom_回到后期'].data.关卡，并强制 自定义布阵 为 1，确保该子节点出现在导出 JSON 中。
+同时修改了 updateRightPanelSwitches 和 Tab 切换逻辑，确保编队控件在切换到前期时渲染，切换到后期时隐藏。
 
-6.5 Tooltip 系统实现
-核心函数：
+5. 修复前后期 Boss 喂豆开关独立性问题
+问题：在 buildFullInstance 中，当检测到棋盘上有 Boss 喂豆操作时，fw_boss关是否需要喂豆 会被自动设置为 { index: 1 }，但用户可能并不想开启后期的这个开关，从而导致后期异常开启。
 
-showTooltip(text, x, y)：显示提示框，定位在鼠标右下方。
+原因：fw_boss关是否需要喂豆 虽然在 userControlledKeys 中被备份，但未在 userOnlyKeys 中恢复，导致后续被棋盘驱动覆盖。
 
-hideTooltip()：隐藏提示框。
+解决：在 buildFullInstance 的第 5 节（恢复用户控制的开关）中，将 fw_boss关是否需要喂豆 加入 userOnlyKeys 列表：
 
-handleMouseEnter(e)：读取 data-tooltip 和 data-tooltip-delay，启动定时器。
+javascript
+const userOnlyKeys = [
+    '是否抛花', '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
+    '小关是否加速', 'fw_boss关是否加速',
+    'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
+    '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
+    'fw_boss关是否需要喂豆'  // 新增
+];
+效果：现在 fw_boss关是否需要喂豆 的值将完全由用户在 UI 中的操作决定，不会被棋盘自动覆盖，前后期 Boss 喂豆开关互不干扰。
 
-handleMouseLeave(e)：取消定时器并隐藏。
+🧪 最终功能验证清单
+功能点	预期行为	验证结果
+选项树中显示编队切换及输入	在自定义布阵 → Yes 下出现 frame_wj_custom_前期使用编队 和 frame_wj_custom_回到后期切换编队，各自 Yes 分支出现编队编号输入	✅
+选项树中显示自定义 Boss 喂豆间隔	在 frame_wj_custom_boss关是否喂豆 → Yes 下出现 frame_wj_boss_custom_喂豆间隔 输入	✅
+后期喂豆间隔动态显示	切换到后期 Tab，棋盘上有小关喂豆或 Boss 喂豆操作时，棋盘下方显示相应间隔控件	✅
+前期自定义 Boss 喂豆间隔动态显示	切换到前期 Tab，棋盘上有 Boss 喂豆操作时，棋盘下方显示间隔控件	✅
+编队切换控件仅前期显示	前期 Tab 显示，后期 Tab 隐藏	✅
+编队切换控件勾选后显示输入框，取消后隐藏并清空数据	交互正常，数据同步到 currentValues	✅
+前后期 Boss 喂豆开关独立	开启前期的 frame_wj_custom_boss关是否喂豆 不会自动开启后期的 fw_boss关是否需要喂豆	✅
+导出 JSON 包含完整 option 树	所有开启的开关及子项正确生成，未开启的开关不导出	✅
+🚀 部署与使用
+将最终的 index.html 放置在任意 Web 服务器或本地浏览器中打开。
 
-handleMouseMove(e)：若提示已显示，跟随鼠标移动。
+使用界面：
 
-启用方法：调用 enableTooltip(el) 为元素绑定事件，或通过 enableTooltips(selector) 批量启用。
+左侧：卡槽备注、布阵操作（拖拽/点击）、快捷开关、无尽选项树（预览）。
 
-动态监听：使用 MutationObserver 监听新增节点，自动为带有 data-tooltip 的新元素启用提示。
+右侧：前后期棋盘、棋盘控制、前期转后期输入、右侧快速开关、编队切换控件。
 
-7. 扩展指南
-7.1 添加新的操作类型
-在 ALL_OPS 对应的数组（如 EARLY_CARDS）中添加新对象，定义 id、label、type、phase、single、maxCount 等。
+布阵操作：点击左侧操作项（如卡1、守卫菇等）选中，再点击棋盘格子放置；支持批量放置（勾选后连续放置）。
 
-在 buildFullInstance 的填充部分（第 4 节）添加对应的处理逻辑，解析 rawOps 并设置对应的开关和坐标。
+快捷开关：开启/关闭对应的总开关，自动联动依赖项。
 
-确保 OPTION_DEFS 中有对应的定义，且层级正确（父开关需包含子选项）。
+导出配置：点击“导出 JSON”下载 .json 文件，或复制预览区 JSON。
 
-7.2 添加新的开关
-在 OPTION_DEFS 中添加新条目，指定 type（switch/select/input/checkbox）。
+重置：点击“默认选项”恢复所有配置到初始状态。
 
-在 userControlledKeys 或 userOnlyKeys 中根据是否需要备份决定是否包含。
+📝 开发者注意事项
+OPTION_DEFS 是核心配置字典，新增或修改 Option 时需同步更新此处以及导出逻辑 buildFullInstance 中的相关填充/恢复代码。
 
-如需在 UI 中显示，添加到对应的 SWITCH_GROUPS（左侧快捷开关）或 RIGHT_SWITCHES（右侧快速控制）。
+棋盘操作（placeOp）会修改 currentValues，并触发 updatePreview() 刷新预览。
 
-如果需要联动，在 DEPENDENCY_RULES 中添加依赖关系。
+动态显示区域（喂豆间隔、编队控件）都依赖 currentTab 和棋盘数据，需要确保在 Tab 切换和棋盘变化时调用相应的更新函数。
 
-7.3 添加新的输入字段
-在 OPTION_DEFS 中添加 type: "input" 的定义，指定 inputs 数组。
+导出过滤：buildCleanNode 会过滤掉 index: 0 的普通开关，但识别开关（能量花、魔甘、三叶草）有反转逻辑，注意此特性。
 
-在 buildFullInstance 中确保该输入不会被重置（除非需要棋盘驱动）。
+全局变量：boardEarly、boardLate、currentValues、OPTION_DEFS 等均在全局作用域，修改时注意一致性。
 
-在对应面板中添加 UI 输入控件（如快捷开关的 coords 数组），并绑定事件更新 currentValues。
+📚 参考文件
+本次修改参考了以下 JSON 文件中的 Option 定义：
 
-7.4 调整棋盘尺寸
-修改 cols 和 rows 的初始值及 colN/rowN 的 max 属性，并确保网格渲染和操作逻辑兼容（在 resizeBoards 中已有处理）。
+frame_custom.json – 自定义布阵相关（编队切换、Boss 喂豆间隔）
 
-7.5 自定义 Tooltip 内容或延迟
-修改全局默认延迟：在 handleMouseEnter 中将 500 改为其他值。
+option.json – 通用开关及喂豆间隔定义
 
-单独指定延迟：在元素上设置 data-tooltip-delay 属性（单位毫秒）。
+Flower.json、Magic_Gan.json、Patch_Plants.json – 其他功能模块
 
-修改提示内容：直接编辑 data-tooltip 属性，或在代码中生成时调整 tip 变量。
+✅ 总结
+本次开发圆满解决了所有已知问题，工具现在支持：
 
-8. 常见问题与调试技巧
-8.1 导出的 JSON 中某些开关没有按预期开启
-检查 buildFullInstance 中的重置与填充逻辑：确保对应操作在 rawOps 中被正确识别，并且填充代码正确设置了 index 和 data。
+完整的前后期布阵操作
 
-检查 OPTION_DEFS：确保该开关存在，且层级路径正确。
+智能的开关联动与独立控制
 
-使用 console.log 调试：在关键位置输出 currentValues 查看值的变化。
+显眼的喂豆间隔设置（前后期分别显示）
 
-8.2 识别开关导出值相反
-检查 buildCleanNode 中的反转逻辑是否正确应用了这三个开关。
+美观且易用的编队切换控件
 
-确认 OPTION_DEFS 中它们的 cases 顺序为 [{name:"No"},{name:"Yes"}]，并且 UI 中 checked 对应 index===1。
+准确无误的 JSON 导出
 
-8.3 前期转后期输入不生效
-确认输入框的 id 为 customReturnLate，且事件监听已绑定。
-
-检查 currentValues['frame_wj_custom_回到后期'] 是否正确更新。
-
-确保 buildFullInstance 中没有重置该值（已移除重置）。
-
-8.4 自定义布阵没有自动开启
-检查棋盘是否有操作（rawOps.length > 0）或用户输入了“前期转后期”。
-
-确认 currentValues['自定义布阵'] 被正确设置为 1。
-
-8.5 导出 JSON 包含其他任务
-已将 Resource 设为空字符串，并删除 ResourceOptionItems，避免 MaaFramework 自动补全。
-
-8.6 Tooltip 不显示或延迟不准确
-检查元素是否已正确添加 data-tooltip 属性和 data-tooltip-delay（若需要）。
-
-确认 enableTooltip 已对该元素调用（动态元素需在生成后调用）。
-
-查看浏览器控制台是否有 JavaScript 错误。
-
-检查 CSS 中 .tooltip-box 的 z-index 是否被其他元素遮挡。
-
-9. 维护与版本记录
-日期	版本	变更内容
-2026-08-07	v1.0	初始版本，包含双棋盘、所有操作类型、智能开关、导出功能。
-2026-08-07	v1.1	修复识别开关反转逻辑，添加前期转后期联动，分离配置名与文件名。
-2026-08-08	v2.0	新增全局悬停提示系统（Tooltip），支持自定义延迟，优化用户体验。完善文档。
-10. 项目约定与编码规范
-命名约定：变量名采用 camelCase，常量采用 UPPER_CASE。
-
-代码风格：使用 4 空格缩进，注释使用中文。
-
-UI 布局：采用 Flexbox 自适应，保持响应式。
-
-数据流：所有状态存储在 currentValues 中，UI 渲染基于该对象，修改后调用 updatePreview() 更新预览。
-
-Tooltip：统一使用 data-tooltip 属性存储提示文本，data-tooltip-delay 控制延迟（可选），通过 enableTooltip 绑定事件。
-
-11. 附录：核心函数速查表
-函数名	作用	关键参数
-placeOp(board, opId, r, c)	在棋盘指定位置放置操作	board, opId, r, c
-buildFullInstance()	构建完整导出 JSON	无
-updatePreview()	刷新预览区 JSON 和快捷开关	无
-renderBoard(gridId, boardData, isLate)	渲染棋盘	gridId, boardData, isLate
-renderQuickSwitches(phase)	渲染左侧快捷开关	phase (early/late)
-enableTooltip(el)	为元素启用悬停提示	el
-handleMouseEnter(e)	鼠标进入时启动定时器	事件对象
-handleMouseLeave(e)	鼠标离开时隐藏提示	事件对象
-文档结束
-
-如需进一步扩展或调整，欢迎参照上述指南进行修改。如有疑问，可查阅代码内注释或咨询维护者。
+所有修改已集成到最终的 index.html 中，可直接投入使用。后续若需扩展新功能，可参照本文档的结构进行增量开发。
