@@ -206,6 +206,15 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
                 </div>
                 <div class="tab-content active" id="tabEarly">
                     <div id="gridEarly"></div>
+                    <div id="earlyFeedIntervals" style="display:none; margin-top:10px; padding:8px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:4px;">⏱️ 前期自定义Boss喂豆间隔设置</div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+        <div id="earlyBossFeedInterval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">Boss关喂豆间隔（秒）：</label>
+            <input type="number" id="earlyBossFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1" max="10">
+        </div>
+    </div>
+</div>
                 </div>
                 <div class="tab-content" id="tabLate">
                     <div id="gridLate"></div>
@@ -1065,6 +1074,9 @@ const SWITCH_GROUPS = {
         coords: [
             { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
             { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
+            { label: '自定义Boss喂豆位置', optName: 'frame_wj_boss_custom_喂豆位置坐标', depends: 'frame_wj_custom_boss关是否喂豆' },
+            { label: '自定义Boss喂豆间隔(秒)', optName: 'frame_wj_boss_custom_喂豆间隔', depends: 'frame_wj_custom_boss关是否喂豆' }
+
         ]
     },
     late: {
@@ -2081,7 +2093,8 @@ function buildFullInstance() {
         '是否抛花', '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
         '小关是否加速', 'fw_boss关是否加速',
         'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
-        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸'
+        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
+        'fw_boss关是否需要喂豆'
     ];
     userOnlyKeys.forEach(key => {
         currentValues[key] = backup[key] || { index: 0 };
@@ -2466,6 +2479,78 @@ function updateLateFeedIntervalsVisibility() {
         if (inp) inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
     }
 }
+// ===== 前期自定义Boss喂豆间隔动态显示 =====
+function initEarlyFeedIntervals() {
+    const inp = document.getElementById('earlyBossFeedIntervalInput');
+    inp.value = currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数 || '3';
+    inp.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '3';
+        if (!currentValues['frame_wj_boss_custom_喂豆间隔']) {
+            currentValues['frame_wj_boss_custom_喂豆间隔'] = { data: {} };
+        }
+        currentValues['frame_wj_boss_custom_喂豆间隔'].data.秒数 = val;
+        updatePreview();
+    });
+}
+
+function updateEarlyFeedIntervalsVisibility() {
+    const container = document.getElementById('earlyFeedIntervals');
+    if (!container) return;
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (currentTab !== 'early') {
+        container.style.display = 'none';
+        return;
+    }
+
+    // 检测前期棋盘上是否有自定义Boss喂豆操作
+    let hasBossFeed = false;
+    for (let r = 0; r < boardEarly.length; r++) {
+        for (let c = 0; c < boardEarly[r].length; c++) {
+            const cell = boardEarly[r][c];
+            for (let item of cell) {
+                if (item.id === 'bossfeed' || item.id === 'bossfeed_late') {
+                    hasBossFeed = true;
+                    break;
+                }
+            }
+            if (hasBossFeed) break;
+        }
+        if (hasBossFeed) break;
+    }
+
+    // 同时也检测自定义布阵 Boss 喂豆开关是否开启
+    const shouldShow = hasBossFeed;
+
+    container.style.display = shouldShow ? 'block' : 'none';
+
+    if (shouldShow) {
+        const inp = document.getElementById('earlyBossFeedIntervalInput');
+        if (inp) inp.value = currentValues['frame_wj_boss_custom_喂豆间隔']?.data?.秒数 || '3';
+    }
+}
+
+// 在 renderAllBoards 中同时更新前期和后期
+const originalRenderAllBoards2 = renderAllBoards;
+renderAllBoards = function() {
+    originalRenderAllBoards2();
+    updateLateFeedIntervalsVisibility();
+    updateEarlyFeedIntervalsVisibility();
+};
+
+// Tab 切换时同时更新
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        setTimeout(() => {
+            updateLateFeedIntervalsVisibility();
+            updateEarlyFeedIntervalsVisibility();
+        }, 50);
+    });
+});
+
+// 初始化
+initEarlyFeedIntervals();
+updateEarlyFeedIntervalsVisibility();
 
 // 覆盖 renderAllBoards 使其自动更新显示
 const originalRenderAllBoards = renderAllBoards;
