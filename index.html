@@ -223,13 +223,16 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
     <div style="font-size:13px; font-weight:600; margin-bottom:4px;">⏱️ 后期喂豆间隔设置</div>
     <div style="display:flex; flex-wrap:wrap; gap:12px;">
         <div id="lateSmallFeedInterval" style="display:flex; align-items:center; gap:6px;">
-            <label style="font-size:12px;">小关喂豆间隔：</label>
-            <select id="lateSmallFeedIntervalSelect" style="padding:3px 8px; border:1px solid #d0d7de; border-radius:4px; font-size:12px; background:#fff;">
-            </select>
+            <label style="font-size:12px;">小关喂豆间隔（秒）：</label>
+            <input type="text" id="lateSmallFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" placeholder="秒">
         </div>
         <div id="lateBossFeedInterval" style="display:flex; align-items:center; gap:6px;">
             <label style="font-size:12px;">Boss关喂豆间隔（秒）：</label>
             <input type="number" id="lateBossFeedIntervalInput" style="width:60px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1" max="10">
+        </div>
+        <div id="lateBossFeed2Interval" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:12px;">Boss关喂豆2间隔（毫秒）：</label>
+            <input type="number" id="lateBossFeed2IntervalInput" style="width:80px; padding:3px 4px; border:1px solid #d0d7de; border-radius:4px; font-size:12px;" min="1">
         </div>
     </div>
 </div>
@@ -369,7 +372,8 @@ if (typeof OPTION_DEFS === 'undefined') {
             cases: [
                 { name: "No" },
                 { name: "Yes", option: [
-                    "fw_boss关喂豆位置", "fw_boss关喂豆间隔"
+                    "fw_boss关喂豆位置", "fw_boss关喂豆间隔",
+                    "fw_boss关额外喂豆位置"
                 ] }
             ]
         },
@@ -595,6 +599,21 @@ if (typeof OPTION_DEFS === 'undefined') {
     OPTION_DEFS['小关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
     OPTION_DEFS['fw_boss关喂豆位置'] = { type: "input", inputs: [{name:"列",default:"5"},{name:"行",default:"3"}] };
     OPTION_DEFS['fw_boss关喂豆间隔'] = { type: "input", inputs: [{ name: "秒", default: "4" }] };
+        OPTION_DEFS['fw_boss关额外喂豆位置'] = {
+        type: 'switch',
+        cases: [
+            { name: 'No' },
+            { name: 'Yes', option: ['fw_boss关喂豆2间隔', 'fw_boss关喂豆2位置'] }
+        ]
+    };
+    OPTION_DEFS['fw_boss关喂豆2间隔'] = {
+        type: 'input',
+        inputs: [{ name: '毫秒', default: '4000' }]
+    };
+    OPTION_DEFS['fw_boss关喂豆2位置'] = {
+        type: 'input',
+        inputs: [{ name: '列', default: '5' }, { name: '行', default: '3' }]
+    };
     OPTION_DEFS['是否开局喂豆球果'] = {
         type: "switch",
         cases: [
@@ -603,13 +622,9 @@ if (typeof OPTION_DEFS === 'undefined') {
         ]
     };
     OPTION_DEFS['小关喂豆间隔'] = {
-        type: "select",
-        cases: [
-            { name: "4秒" }, { name: "5秒" }, { name: "8秒" }, { name: "16秒" },
-            { name: "24秒" }, { name: "32秒" }, { name: "40秒" }, { name: "60秒" },
-            { name: "80秒" }, { name: "100秒" }
-        ]
-    };
+    type: 'input',
+    inputs: [{ name: 'seconds', default: '4' }]
+};
     OPTION_DEFS['喂豆球果'] = {
         type: "input",
         inputs: [{ name: "列", default: "1" }, { name: "行", default: "1" }]
@@ -821,7 +836,10 @@ for (let slot=2; slot<=8; slot++) {
 const LATE_SHOVEL = [ { id: 'shovel_late', label: '铲除', type: 'shovel', phase: 'late', single: false, maxCount: 5 } ];
 const LATE_FEED = [ { id: 'feed_late', label: '小关喂豆', type: 'feed', phase: 'late', single: true } ];
 const LATE_FEED_BALL = [ { id: 'feed_ball_late', label: '喂豆球果', type: 'feed', phase: 'late', single: true } ];
-const LATE_BOSS_FEED = [ { id: 'bossfeed_late', label: 'Boss喂豆', type: 'bossfeed', phase: 'late', single: true } ];
+const LATE_BOSS_FEED = [
+    { id: 'bossfeed_late', label: 'Boss喂豆', type: 'bossfeed', phase: 'late', single: true },
+    { id: 'bossfeed2_late', label: 'Boss喂豆2', type: 'bossfeed', phase: 'late', single: true }
+];
 const LATE_FLOWER = [ { id: 'flower', label: '小关抛花', type: 'flower', phase: 'late', single: false, maxCount: 2 } ];
 const LATE_BOSS_FLOWER = [ { id: 'bossflower', label: 'Boss抛花', type: 'bossflower', phase: 'late', single: false, maxCount: 4 } ];
 const LATE_MAGIC = [
@@ -1882,6 +1900,9 @@ function buildFullInstance() {
     currentValues['frame_wj_boss_custom_喂豆位置坐标'] = { data: {} };
     currentValues['小关喂豆位置'] = { data: {} };
     currentValues['fw_boss关喂豆位置'] = { data: {} };
+    currentValues['fw_boss关额外喂豆位置'] = { index: 0 };
+    currentValues['fw_boss关喂豆2间隔'] = { data: {} };
+    currentValues['fw_boss关喂豆2位置'] = { data: {} };
 
     // ===== 4. 根据 rawOps 填充数据 =====
     // 4.1 卡槽种植
@@ -1996,6 +2017,18 @@ if (lateBossFeedNormal.length > 0) {
     currentValues['fw_boss关喂豆位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
 }
 
+// 后期Boss喂豆2 (bossfeed2_late) → 控制 fw_boss关额外喂豆位置
+const lateBossFeed2 = rawOps.filter(op => op.id === 'bossfeed2_late');
+if (lateBossFeed2.length > 0) {
+    const last = lateBossFeed2[lateBossFeed2.length - 1];
+    currentValues['fw_boss关是否需要喂豆'] = { index: 1 }; // 强制主开关开启
+    currentValues['fw_boss关额外喂豆位置'] = { index: 1 };
+    currentValues['fw_boss关喂豆2位置'] = { data: { "列": String(last.col), "行": String(last.row) } };
+    // 如果间隔未手动设置，使用默认值
+    if (!currentValues['fw_boss关喂豆2间隔']?.data?.毫秒) {
+        currentValues['fw_boss关喂豆2间隔'] = { data: { "毫秒": "4000" } };
+    }
+}
 // 前期小关喂豆 (feed, board === 'early') → 控制 frame_wj_custom_布完阵是否喂豆
 const earlyFeedSmall = rawOps.filter(op => op.id === 'feed' && op.board === 'early');
 if (earlyFeedSmall.length > 0) {
@@ -2430,22 +2463,18 @@ window.onload = function() {
     currentValues['无尽模式'] = { index: 1 };
     // ===== 后期喂豆间隔动态显示 =====
 function initLateFeedIntervals() {
-    const sel = document.getElementById('lateSmallFeedIntervalSelect');
-    const def = OPTION_DEFS['小关喂豆间隔'];
-    if (def && def.type === 'select') {
-        sel.innerHTML = '';
-        def.cases.forEach((c, idx) => {
-            const opt = document.createElement('option');
-            opt.value = idx;
-            opt.textContent = c.label || c.name;
-            sel.appendChild(opt);
-        });
-        sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
-        sel.addEventListener('change', function() {
-            currentValues['小关喂豆间隔'] = { index: parseInt(this.value) };
-            updatePreview();
-        });
-    }
+    // 小关喂豆间隔（自由输入，单位秒，支持小数）
+    const smallInp = document.getElementById('lateSmallFeedIntervalInput');
+    smallInp.value = currentValues['小关喂豆间隔']?.data?.seconds || '4';
+    smallInp.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '4';
+        if (!currentValues['小关喂豆间隔']) currentValues['小关喂豆间隔'] = { data: {} };
+        currentValues['小关喂豆间隔'].data.seconds = val;
+        updatePreview();
+    });
+
+    // Boss关喂豆间隔（单位秒）
     const inp = document.getElementById('lateBossFeedIntervalInput');
     inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
     inp.addEventListener('input', function() {
@@ -2453,6 +2482,17 @@ function initLateFeedIntervals() {
         if (val === '') val = '4';
         if (!currentValues['fw_boss关喂豆间隔']) currentValues['fw_boss关喂豆间隔'] = { data: {} };
         currentValues['fw_boss关喂豆间隔'].data.秒 = val;
+        updatePreview();
+    });
+
+    // Boss关喂豆2间隔（单位毫秒）
+    const inp2 = document.getElementById('lateBossFeed2IntervalInput');
+    inp2.value = currentValues['fw_boss关喂豆2间隔']?.data?.毫秒 || '4000';
+    inp2.addEventListener('input', function() {
+        let val = this.value.trim();
+        if (val === '') val = '4000';
+        if (!currentValues['fw_boss关喂豆2间隔']) currentValues['fw_boss关喂豆2间隔'] = { data: {} };
+        currentValues['fw_boss关喂豆2间隔'].data.毫秒 = val;
         updatePreview();
     });
 }
@@ -2467,26 +2507,33 @@ function updateLateFeedIntervalsVisibility() {
     }
     let hasSmallFeed = false;
     let hasBossFeed = false;
+    let hasBossFeed2 = false;
     for (let r = 0; r < boardLate.length; r++) {
         for (let c = 0; c < boardLate[r].length; c++) {
             const cell = boardLate[r][c];
             for (let item of cell) {
                 if (item.id === 'feed' || item.id === 'feed_late') hasSmallFeed = true;
                 if (item.id === 'bossfeed' || item.id === 'bossfeed_late') hasBossFeed = true;
+                if (item.id === 'bossfeed2_late') hasBossFeed2 = true;
             }
         }
     }
-    const shouldShow = hasSmallFeed || hasBossFeed;
+    const shouldShow = hasSmallFeed || hasBossFeed || hasBossFeed2;
     container.style.display = shouldShow ? 'block' : 'none';
     document.getElementById('lateSmallFeedInterval').style.display = hasSmallFeed ? 'flex' : 'none';
     document.getElementById('lateBossFeedInterval').style.display = hasBossFeed ? 'flex' : 'none';
+    document.getElementById('lateBossFeed2Interval').style.display = hasBossFeed2 ? 'flex' : 'none';
     if (hasSmallFeed) {
-        const sel = document.getElementById('lateSmallFeedIntervalSelect');
-        if (sel) sel.value = currentValues['小关喂豆间隔']?.index ?? 0;
+        const inp = document.getElementById('lateSmallFeedIntervalInput');
+        if (inp) inp.value = currentValues['小关喂豆间隔']?.data?.seconds || '4';
     }
     if (hasBossFeed) {
         const inp = document.getElementById('lateBossFeedIntervalInput');
         if (inp) inp.value = currentValues['fw_boss关喂豆间隔']?.data?.秒 || '4';
+    }
+    if (hasBossFeed2) {
+        const inp2 = document.getElementById('lateBossFeed2IntervalInput');
+        if (inp2) inp2.value = currentValues['fw_boss关喂豆2间隔']?.data?.毫秒 || '4000';
     }
 }
 // ===== 前期自定义Boss喂豆间隔动态显示 =====
