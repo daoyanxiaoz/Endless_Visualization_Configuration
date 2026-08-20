@@ -132,6 +132,10 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
         <button class="btn btn-primary" id="exportBtn" data-tooltip="导出配置为 JSON 文件">📥 导出 JSON</button>
         <button class="btn btn-success" id="loadDefaultBtn" data-tooltip="重置所有配置到默认状态">↺ 默认选项</button>
         <button class="btn" id="copyBtn" data-tooltip="复制预览区 JSON 到剪贴板">📋 复制</button>
+        <button class="btn" id="importBtn" data-tooltip="从 JSON 文件导入配置">📂 导入 JSON</button>
+        <button class="btn" id="undoBtn" data-tooltip="'ctrl+z'撤销上一步棋盘操作">↩ 撤销</button>
+        <button class="btn" id="redoBtn" data-tooltip="'ctrl+y'重做棋盘操作">↪ 重做</button>
+        <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
     </div>
 
     <div class="flex-row">
@@ -863,6 +867,48 @@ let isBatchMode = true;
 let opItemsList = [];
 let keyboardSelectedIndex = -1;
 
+// ===== 撤销/重做 =====
+let undoStack = [];
+let redoStack = [];
+
+function saveBoardState() {
+    const copyEarly = JSON.parse(JSON.stringify(boardEarly));
+    const copyLate = JSON.parse(JSON.stringify(boardLate));
+    undoStack.push({ early: copyEarly, late: copyLate });
+    if (undoStack.length > 50) undoStack.shift();
+    redoStack = [];
+}
+
+function undoBoard() {
+    if (undoStack.length === 0) return;
+    const currentState = {
+        early: JSON.parse(JSON.stringify(boardEarly)),
+        late: JSON.parse(JSON.stringify(boardLate))
+    };
+    redoStack.push(currentState);
+    const prevState = undoStack.pop();
+    boardEarly = prevState.early;
+    boardLate = prevState.late;
+    renderAllBoards();
+    updatePreview();
+    document.getElementById('statusMsg').textContent = '↩ 已撤销';
+}
+
+function redoBoard() {
+    if (redoStack.length === 0) return;
+    const currentState = {
+        early: JSON.parse(JSON.stringify(boardEarly)),
+        late: JSON.parse(JSON.stringify(boardLate))
+    };
+    undoStack.push(currentState);
+    const nextState = redoStack.pop();
+    boardEarly = nextState.early;
+    boardLate = nextState.late;
+    renderAllBoards();
+    updatePreview();
+    document.getElementById('statusMsg').textContent = '↪ 已重做';
+}
+
 function getVisibleOpItems() {
     const container = document.getElementById('opPanel');
     const items = container.querySelectorAll('.op-item');
@@ -926,7 +972,20 @@ function resetKeyboardNavigation() {
 
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-    const key = e.key.toLowerCase();
+        const key = e.key.toLowerCase();
+
+    // 撤销/重做快捷键
+    if (e.ctrlKey && key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undoBoard();
+        return;
+    }
+    if (e.ctrlKey && (key === 'y' || (key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redoBoard();
+        return;
+    }
+
     if (key === 'w' || key === 'arrowup') {
         e.preventDefault();
         moveKeyboardSelection(-1);
@@ -1037,6 +1096,7 @@ function createOpElement(op) {
     else if (op.id === 'feed_late') tip = '在指定位置循环喂能量豆';
     else if (op.id === 'bossfeed') tip = '在指定位置循环喂能量豆';
     else if (op.id === 'bossfeed_late') tip = '在指定位置循环喂能量豆';
+    else if (op.id === 'bossfeed2_late') tip = 'Boss关第二个喂豆位置';
     else if (op.type === 'patch') tip = `补种卡槽${op.slot}的植物，最多5次`;
     else if (op.type === 'flower') tip = '抛花收集能量豆，最多2次';
     else if (op.type === 'bossflower') tip = 'Boss关抛花，最多4次';
@@ -1097,7 +1157,6 @@ const SWITCH_GROUPS = {
             { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
             { label: '自定义Boss喂豆位置', optName: 'frame_wj_boss_custom_喂豆位置坐标', depends: 'frame_wj_custom_boss关是否喂豆' },
             { label: '自定义Boss喂豆间隔(秒)', optName: 'frame_wj_boss_custom_喂豆间隔', depends: 'frame_wj_custom_boss关是否喂豆' }
-
         ]
     },
     late: {
@@ -1387,6 +1446,7 @@ function renderRightPanelSwitches() {
 
 function updateRightPanelSwitches() {
     renderRightPanelSwitches();
+    renderTeamSwitchControls();
 }
 
 // ============================================================
@@ -1442,12 +1502,17 @@ function placeOp(board, opId, r, c) {
         }
     }
 
+    // 记录修改前状态（在确定操作成功前）
+    saveBoardState();
+
     if (opItem.single) {
         const existing = findOpInBoard(board, opId);
         if (existing) board[existing.r][existing.c].splice(existing.idx, 1);
     } else {
         if (countOpInBoard(board, opId) >= opItem.maxCount) {
             alert(`“${opItem.label}”已达最大次数 ${opItem.maxCount}`);
+            // 撤销刚才保存的状态，因为操作未成功
+            undoStack.pop();
             return false;
         }
     }
@@ -1456,7 +1521,11 @@ function placeOp(board, opId, r, c) {
         const used = getUsedPositions(board, opId);
         let pos = 1;
         while (used.includes(pos)) pos++;
-        if (pos > opItem.maxCount) { alert(`位置已满`); return false; }
+        if (pos > opItem.maxCount) {
+            alert(`位置已满`);
+            undoStack.pop();
+            return false;
+        }
         itemData.slotPos = pos;
         itemData.label = `${opItem.label}-${pos}`;
     }
@@ -1532,6 +1601,7 @@ function renderBoard(gridId, boardData, isLate) {
             const tr = parseInt(d.dataset.r);
             const tc = parseInt(d.dataset.c);
             if (boardData[tr] && boardData[tr][tc]) {
+                saveBoardState();
                 boardData[tr][tc] = [];
                 renderAllBoards();
                 updatePreview();
@@ -1549,11 +1619,13 @@ function renderAllBoards() {
 }
 
 function clearBoard(isLate) {
+    saveBoardState();
     const board = isLate ? boardLate : boardEarly;
     for (let r=0; r<board.length; r++) for (let c=0; c<board[r].length; c++) board[r][c] = [];
     renderAllBoards(); updatePreview();
 }
 function resizeBoards() {
+    saveBoardState();
     const nc = Math.max(1, Math.min(9, parseInt(document.getElementById('colN').value) || 9));
     const nr = Math.max(1, Math.min(5, parseInt(document.getElementById('rowN').value) || 5));
     const oldEarly = boardEarly, oldLate = boardLate;
@@ -2335,6 +2407,320 @@ currentValues['自定义布阵'] = shouldEnableCustom ? { index: 1 } : { index: 
     };
 }
 
+// ============================================================
+// 11. 导入 JSON 相关
+// ============================================================
+function importFromJSONText(jsonText) {
+    let data;
+    try {
+        data = JSON.parse(jsonText);
+    } catch (e) {
+        alert('JSON 解析失败，请检查文件内容');
+        return;
+    }
+
+    // 清空撤销重做栈
+    undoStack = [];
+    redoStack = [];
+
+    // 重置 currentValues 为默认
+    initDefaultValues();
+
+    // 填充基本字段
+    document.getElementById('configName').value = data.InstanceName || '';
+    document.getElementById('controllerName').value = data.CurrentControllerName || '';
+    document.getElementById('taskEntry').value = (data.TaskItems?.[0]?.entry) || '';
+
+    // 查找无尽模式的 option 树
+    const optionTree = data.TaskItems?.[0]?.option?.[0];
+    if (optionTree) {
+        function fillValues(node) {
+            if (!node || !node.name) return;
+            const name = node.name;
+            const def = OPTION_DEFS[name];
+            if (!def) return;
+
+            if (def.type === 'select' || def.type === 'switch') {
+                let idx = node.index !== undefined ? node.index : 0;
+                // 识别类开关需要反转索引（因为导出时反转了）
+                const isRecog = name === '识别能量花卡槽位置' || name === '识别魔甘卡槽位置' || name === '识别三叶草卡槽位置' || name === '是否开局喂豆球果';
+                if (isRecog) {
+                    idx = idx === 1 ? 0 : 1;
+                }
+                currentValues[name] = { index: idx };
+            } else if (def.type === 'input') {
+                currentValues[name] = { data: node.data || {} };
+            } else if (def.type === 'checkbox') {
+                currentValues[name] = { selected_cases: node.selected_cases || [] };
+            }
+
+            if (node.sub_options) {
+                node.sub_options.forEach(child => fillValues(child));
+            }
+        }
+        fillValues(optionTree);
+    }
+
+    // 清空棋盘并重建
+    initBoards();
+    rebuildBoardsFromValues();
+
+    // 更新所有 UI
+    renderSlotRemarks();
+    renderAllBoards();
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+    renderQuickSwitches(currentTab);
+    renderRightPanelSwitches();
+    const container = document.getElementById('optionTree');
+    container.innerHTML = '';
+    buildOptionUI(container, getRootOptionNames());
+    updatePreview();
+    document.getElementById('statusMsg').textContent = '📂 导入成功';
+}
+
+function rebuildBoardsFromValues() {
+    // 辅助：放置操作到指定棋盘（不使用 placeOp，避免触发撤销记录）
+    function placeImportedOp(board, opId, col, row, slotPos) {
+        const opItem = ALL_OPS.find(o => o.id === opId);
+        if (!opItem) return;
+        const itemData = { id: opId, label: opItem.label, type: opItem.type, col, row, opData: opItem };
+        if (!opItem.single && slotPos) {
+            itemData.slotPos = slotPos;
+            itemData.label = `${opItem.label}-${slotPos}`;
+        }
+        const r = row - 1, c = col - 1;
+        if (board === boardEarly && boardEarly[r] && boardEarly[r][c]) {
+            boardEarly[r][c].push(itemData);
+        } else if (board === boardLate && boardLate[r] && boardLate[r][c]) {
+            boardLate[r][c].push(itemData);
+        }
+    }
+
+    // 卡槽种植（前期）
+    for (let s = 1; s <= 8; s++) {
+        const prefix = `卡${s}`;
+        if (currentValues[`${prefix}种植`]?.index === 1) {
+            for (let i = 1; i <= 10; i++) {
+                const coord = currentValues[`${prefix}种第${i}次坐标`]?.data;
+                if (coord && coord['列'] && coord['行']) {
+                    const col = parseInt(coord['列']);
+                    const row = parseInt(coord['行']);
+                    if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                        placeImportedOp(boardEarly, `card${s}`, col, row, i);
+                    }
+                }
+            }
+        }
+    }
+
+    // 守卫菇（前期）
+    if (currentValues['frame_wj_custom_是否种守卫菇']?.index === 1) {
+        for (let i = 1; i <= 5; i++) {
+            const coord = currentValues[`frame_wj_custom_种守卫菇位置${i}坐标`]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    placeImportedOp(boardEarly, 'guard', col, row, i);
+                }
+            }
+        }
+    }
+
+    // 铲子前5个（前期）
+    if (currentValues['frame_wj_custom_是否使用铲子1']?.index === 1) {
+        for (let i = 1; i <= 5; i++) {
+            const coord = currentValues[`frame_wj_custom_使用铲子${i}坐标`]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    placeImportedOp(boardEarly, 'shovel_before', col, row, i);
+                }
+            }
+        }
+    }
+
+    // 铲子后5个（前期）
+    if (currentValues['frame_wj_custom_是否使用铲子2']?.index === 1) {
+        for (let i = 6; i <= 10; i++) {
+            const coord = currentValues[`frame_wj_custom_使用铲子${i}坐标`]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    const slotPos = i - 5; // 转换为 1~5
+                    placeImportedOp(boardEarly, 'shovel_after', col, row, slotPos);
+                }
+            }
+        }
+    }
+
+    // 补植物（后期）
+    if (currentValues['是否需要补植物']?.index === 1) {
+        for (let slot = 2; slot <= 8; slot++) {
+            const switchName = `frame_卡槽${slot}_补植物`;
+            if (currentValues[switchName]?.index === 1) {
+                const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
+                for (let pos = 1; pos <= 5; pos++) {
+                    const coord = currentValues[`${childPrefix}${pos}坐标`]?.data;
+                    if (coord && coord['列'] && coord['行']) {
+                        const col = parseInt(coord['列']);
+                        const row = parseInt(coord['行']);
+                        if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                            placeImportedOp(boardLate, `patch_slot${slot}`, col, row, pos);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 铲除植物（后期）
+    if (currentValues['铲除植物']?.index === 1) {
+        for (let i = 1; i <= 5; i++) {
+            const coord = currentValues[`铲除植物${i}坐标`]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    placeImportedOp(boardLate, 'shovel_late', col, row, i);
+                }
+            }
+        }
+    }
+
+    // 后期小关喂豆
+    if (currentValues['小关是否喂豆']?.index === 1) {
+        const coord = currentValues['小关喂豆位置']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'feed_late', col, row, null);
+            }
+        }
+    }
+
+    // 后期 Boss 喂豆
+    if (currentValues['fw_boss关是否需要喂豆']?.index === 1) {
+        const coord = currentValues['fw_boss关喂豆位置']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'bossfeed_late', col, row, null);
+            }
+        }
+    }
+
+    // 后期 Boss 喂豆2
+    if (currentValues['fw_boss关额外喂豆位置']?.index === 1) {
+        const coord = currentValues['fw_boss关喂豆2位置']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'bossfeed2_late', col, row, null);
+            }
+        }
+    }
+
+    // 前期小关喂豆（自定义布阵）
+    if (currentValues['frame_wj_custom_布完阵是否喂豆']?.index === 1) {
+        const coord = currentValues['frame_wj_custom_喂豆位置坐标']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardEarly, 'feed', col, row, null);
+            }
+        }
+    }
+
+    // 前期 Boss 喂豆
+    if (currentValues['frame_wj_custom_boss关是否喂豆']?.index === 1) {
+        const coord = currentValues['frame_wj_boss_custom_喂豆位置坐标']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardEarly, 'bossfeed', col, row, null);
+            }
+        }
+    }
+
+    // 喂豆球果
+    if (currentValues['是否开局喂豆球果']?.index === 1) {
+        const coord = currentValues['喂豆球果']?.data;
+        if (coord && coord['列'] && coord['行']) {
+            const col = parseInt(coord['列']);
+            const row = parseInt(coord['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'feed_ball_late', col, row, null);
+            }
+        }
+    }
+
+    // 小关抛花
+    if (currentValues['小关是否抛花']?.index === 1) {
+        const coord1 = currentValues['1花位置']?.data;
+        if (coord1 && coord1['列'] && coord1['行']) {
+            const col = parseInt(coord1['列']);
+            const row = parseInt(coord1['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'flower', col, row, 1);
+            }
+        }
+        const coord2 = currentValues['2花位置']?.data;
+        if (coord2 && coord2['列'] && coord2['行']) {
+            const col = parseInt(coord2['列']);
+            const row = parseInt(coord2['行']);
+            if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                placeImportedOp(boardLate, 'flower', col, row, 2);
+            }
+        }
+    }
+
+    // Boss 抛花
+    if (currentValues['boss关是否抛花']?.index === 1) {
+        for (let i = 1; i <= 4; i++) {
+            const coord = currentValues[`boss关_${i}花位置`]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    placeImportedOp(boardLate, 'bossflower', col, row, i);
+                }
+            }
+        }
+    }
+
+    // 魔甘
+    if (currentValues['是否魔甘收尾(牢玩家专属)']?.index === 1) {
+        const mappings = [
+            { opId: 'sweet1', optName: '甜薯1种植位置' },
+            { opId: 'sweet2', optName: '甜薯2种植位置' },
+            { opId: 'ganlan1', optName: '飓风甘蓝1种植位置' },
+            { opId: 'ganlan2', optName: '飓风甘蓝2种植位置' },
+            { opId: 'magicfeed', optName: '魔甘前喂豆位置' }
+        ];
+        mappings.forEach(map => {
+            const coord = currentValues[map.optName]?.data;
+            if (coord && coord['列'] && coord['行']) {
+                const col = parseInt(coord['列']);
+                const row = parseInt(coord['行']);
+                if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
+                    placeImportedOp(boardLate, map.opId, col, row, null);
+                }
+            }
+        });
+    }
+}
+
+// ============================================================
+// 12. 更新预览和导出
+// ============================================================
 function updatePreview() {
     const data = buildFullInstance();
     document.getElementById('previewText').value = JSON.stringify(data, null, 2);
@@ -2367,6 +2753,8 @@ function exportJSON() {
 }
 
 function loadDefaults() {
+    undoStack = [];
+    redoStack = [];
     initDefaultValues();
     slotRemarks = Array(8).fill('');
     renderSlotRemarks();
@@ -2398,70 +2786,8 @@ function copyPreview() {
 }
 
 // ============================================================
-// 11. 初始化
+// 13. 动态间隔区域相关函数
 // ============================================================
-window.onload = function() {
-    enableTooltips('[data-tooltip]');
-    observeNewElements();
-
-    renderSlotRemarks();
-    initBoards();
-    renderAllBoards();
-    initTabs();
-
-    const container = document.getElementById('optionTree');
-    buildOptionUI(container, getRootOptionNames());
-    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
-    renderQuickSwitches(currentTab);
-    document.querySelector('.tab[data-tab="early"]').click();
-
-    document.getElementById('batchMode').checked = true;
-    isBatchMode = true;
-
-    renderRightPanelSwitches();
-    updateRightPanelSwitches();
-
-    const returnLateInput = document.getElementById('customReturnLate');
-    if (returnLateInput) {
-        returnLateInput.value = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
-        returnLateInput.addEventListener('input', function() {
-            const val = this.value.trim();
-            if (!currentValues['frame_wj_custom_回到后期']) {
-                currentValues['frame_wj_custom_回到后期'] = { data: {} };
-            }
-            currentValues['frame_wj_custom_回到后期'].data.关卡 = val;
-            if (val !== '') {
-                currentValues['自定义布阵'] = { index: 1 };
-            }
-            updatePreview();
-        });
-    }
-
-    updatePreview();
-
-    document.getElementById('exportBtn').addEventListener('click', exportJSON);
-    document.getElementById('loadDefaultBtn').addEventListener('click', loadDefaults);
-    document.getElementById('copyBtn').addEventListener('click', copyPreview);
-    document.getElementById('btnClearEarly').addEventListener('click', function() {
-        if (confirm('确定重置前期棋盘吗？')) {
-            clearBoard(false);
-            document.getElementById('statusMsg').textContent = '🗑️ 前期棋盘已清空';
-        }
-    });
-    document.getElementById('btnClearLate').addEventListener('click', function() {
-        if (confirm('确定重置后期棋盘吗？')) {
-            clearBoard(true);
-            document.getElementById('statusMsg').textContent = '🗑️ 后期棋盘已清空';
-        }
-    });
-    document.getElementById('btnResize').addEventListener('click', resizeBoards);
-
-    ['configName','controllerName','resourceName','taskEntry'].forEach(id => {
-        document.getElementById(id).addEventListener('input', updatePreview);
-    });
-
-    currentValues['无尽模式'] = { index: 1 };
-    // ===== 后期喂豆间隔动态显示 =====
 function initLateFeedIntervals() {
     // 小关喂豆间隔（自由输入，单位秒，支持小数）
     const smallInp = document.getElementById('lateSmallFeedIntervalInput');
@@ -2576,7 +2902,6 @@ function updateEarlyFeedIntervalsVisibility() {
         if (hasBossFeed) break;
     }
 
-    // 同时也检测自定义布阵 Boss 喂豆开关是否开启
     const shouldShow = hasBossFeed;
 
     container.style.display = shouldShow ? 'block' : 'none';
@@ -2733,15 +3058,100 @@ document.querySelectorAll('.tab').forEach(tab => {
     });
 });
 
-// 在更新右侧开关时顺便更新编队控件（覆盖原有函数）
-const originalUpdateRightPanelSwitches = updateRightPanelSwitches;
-updateRightPanelSwitches = function() {
-    originalUpdateRightPanelSwitches();
-    renderTeamSwitchControls();
-};
-
 // 初始化调用
 renderTeamSwitchControls();
+
+// ============================================================
+// 14. 事件绑定与初始化
+// ============================================================
+window.onload = function() {
+    enableTooltips('[data-tooltip]');
+    observeNewElements();
+
+    renderSlotRemarks();
+    initBoards();
+    renderAllBoards();
+    initTabs();
+
+    const container = document.getElementById('optionTree');
+    buildOptionUI(container, getRootOptionNames());
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
+    renderQuickSwitches(currentTab);
+    document.querySelector('.tab[data-tab="early"]').click();
+
+    document.getElementById('batchMode').checked = true;
+    isBatchMode = true;
+
+    renderRightPanelSwitches();
+    updateRightPanelSwitches();
+
+    const returnLateInput = document.getElementById('customReturnLate');
+    if (returnLateInput) {
+        returnLateInput.value = currentValues['frame_wj_custom_回到后期']?.data?.关卡 || '';
+        returnLateInput.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (!currentValues['frame_wj_custom_回到后期']) {
+                currentValues['frame_wj_custom_回到后期'] = { data: {} };
+            }
+            currentValues['frame_wj_custom_回到后期'].data.关卡 = val;
+            if (val !== '') {
+                currentValues['自定义布阵'] = { index: 1 };
+            }
+            updatePreview();
+        });
+    }
+
+    // 导入按钮事件
+    document.getElementById('importBtn').addEventListener('click', function() {
+        document.getElementById('importFileInput').click();
+    });
+    document.getElementById('importFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            importFromJSONText(ev.target.result);
+        };
+        reader.readAsText(file);
+        this.value = '';
+    });
+
+    // 撤销/重做按钮
+    document.getElementById('undoBtn').addEventListener('click', undoBoard);
+    document.getElementById('redoBtn').addEventListener('click', redoBoard);
+
+    // 其他按钮
+    document.getElementById('exportBtn').addEventListener('click', exportJSON);
+    document.getElementById('loadDefaultBtn').addEventListener('click', loadDefaults);
+    document.getElementById('copyBtn').addEventListener('click', copyPreview);
+    document.getElementById('btnClearEarly').addEventListener('click', function() {
+        if (confirm('确定重置前期棋盘吗？')) {
+            clearBoard(false);
+            document.getElementById('statusMsg').textContent = '🗑️ 前期棋盘已清空';
+        }
+    });
+    document.getElementById('btnClearLate').addEventListener('click', function() {
+        if (confirm('确定重置后期棋盘吗？')) {
+            clearBoard(true);
+            document.getElementById('statusMsg').textContent = '🗑️ 后期棋盘已清空';
+        }
+    });
+    document.getElementById('btnResize').addEventListener('click', resizeBoards);
+
+    ['configName','controllerName','resourceName','taskEntry'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePreview);
+    });
+
+    currentValues['无尽模式'] = { index: 1 };
+
+    // 初始化间隔区域
+    initLateFeedIntervals();
+    updateLateFeedIntervalsVisibility();
+    initEarlyFeedIntervals();
+    updateEarlyFeedIntervalsVisibility();
+
+    // 初始渲染
+    updatePreview();
     loadDefaults();
 };
 </script>
