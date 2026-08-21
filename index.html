@@ -195,10 +195,10 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
                 <div id="quickSwitchContainer" style="margin-top:6px;"></div>
             </div>
 
-            <div class="panel" style="max-height:400px;overflow-y:auto;">
-                <div class="panel-title">⚙️ 无尽选项</div>
-                <div id="optionTree" class="option-tree"></div>
-            </div>
+            <div class="panel" style="max-height:400px;overflow-y:auto;" hidden>
+    <div class="panel-title">⚙️ 无尽选项</div>
+    <div id="optionTree" class="option-tree"></div>
+</div>
         </div>
 
         <div class="flex-col" style="min-width:420px;">
@@ -1152,12 +1152,7 @@ const SWITCH_GROUPS = {
             { optionName: 'frame_wj_custom_是否使用铲子1', label: '守卫菇前铲子', default: 0 },
             { optionName: 'frame_wj_custom_是否使用铲子2', label: '守卫菇后铲子', default: 0 },
         ],
-        coords: [
-            { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
-            { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
-            { label: '自定义Boss喂豆位置', optName: 'frame_wj_boss_custom_喂豆位置坐标', depends: 'frame_wj_custom_boss关是否喂豆' },
-            { label: '自定义Boss喂豆间隔(秒)', optName: 'frame_wj_boss_custom_喂豆间隔', depends: 'frame_wj_custom_boss关是否喂豆' }
-        ]
+        coords: []
     },
     late: {
         switches: [
@@ -1178,12 +1173,7 @@ const SWITCH_GROUPS = {
             { optionName: '识别三叶草卡槽位置', label: '识别三叶草' },
             { optionName: '识别能量花卡槽位置', label: '识别能量花' },
         ],
-        coords: [
-            { label: '小关喂豆位置', optName: '小关喂豆位置', depends: '小关是否喂豆' },
-            { label: 'Boss喂豆位置', optName: 'fw_boss关喂豆位置', depends: 'fw_boss关是否需要喂豆' },
-            { label: '魔甘前喂豆位置', optName: '魔甘前喂豆位置', depends: '是否魔甘收尾(牢玩家专属)' },
-            { label: '喂豆球果位置', optName: '喂豆球果', depends: '是否开局喂豆球果' }
-        ]
+        coords: []
     }
 };
 
