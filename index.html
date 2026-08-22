@@ -302,7 +302,8 @@ if (typeof OPTION_DEFS === 'undefined') {
                     "frame_wj_custom_是否使用铲子1",
                     "frame_wj_custom_是否使用铲子2",
                     "卡1种植", "卡2种植", "卡3种植", "卡4种植", "卡5种植",
-                    "卡6种植", "卡7种植", "卡8种植"
+                    "卡6种植", "卡7种植", "卡8种植",
+                    "frame_wj_custom_球果切换形态"
                 ] }
             ]
         },
@@ -314,7 +315,8 @@ if (typeof OPTION_DEFS === 'undefined') {
                     "frame_卡槽2_补植物", "frame_卡槽3_补植物", "frame_卡槽4_补植物",
                     "frame_卡槽5_补植物", "frame_卡槽6_补植物", "frame_卡槽7_补植物",
                     "frame_卡槽8_补植物",
-                    "铲除植物"
+                    "铲除植物",
+                    "frame_球果切换形态"
                 ] }
             ]
         },
@@ -465,14 +467,15 @@ if (typeof OPTION_DEFS === 'undefined') {
     // 动态生成卡槽种植子选项
     for (let s=1; s<=8; s++) {
         const prefix = `卡${s}`;
+        const maxTimes = (s === 1 || s === 2) ? 25 : 10; // 卡1、卡2支持25次
         OPTION_DEFS[`${prefix}种植`] = {
             type: "switch",
             cases: [
                 { name: "No" },
-                { name: "Yes", option: Array.from({length:10}, (_,i) => `${prefix}种第${i+1}次`) }
+                { name: "Yes", option: Array.from({length:maxTimes}, (_,i) => `${prefix}种第${i+1}次`) }
             ]
         };
-        for (let i=1; i<=10; i++) {
+        for (let i=1; i<=maxTimes; i++) {
             const name = `${prefix}种第${i}次`;
             OPTION_DEFS[name] = {
                 type: "switch",
@@ -492,8 +495,9 @@ if (typeof OPTION_DEFS === 'undefined') {
     for (let slot=2; slot<=8; slot++) {
         const switchName = `frame_卡槽${slot}_补植物`;
         const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
+        const maxPos = (slot === 2 || slot === 3) ? 15 : 5; // 卡槽2、3支持15次
         const optionArray = [];
-        for (let pos=1; pos<=5; pos++) {
+        for (let pos=1; pos<=maxPos; pos++) {
             optionArray.push(`${childPrefix}${pos}`);
         }
         OPTION_DEFS[switchName] = {
@@ -503,7 +507,7 @@ if (typeof OPTION_DEFS === 'undefined') {
                 { name: "Yes", option: optionArray }
             ]
         };
-        for (let pos=1; pos<=5; pos++) {
+        for (let pos=1; pos<=maxPos; pos++) {
             const name = `${childPrefix}${pos}`;
             OPTION_DEFS[name] = {
                 type: "switch",
@@ -649,6 +653,39 @@ if (typeof OPTION_DEFS === 'undefined') {
     OPTION_DEFS['原大_boss关是否需要喂豆'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['原大_是否需要补植物'] = { type: "switch", cases: [{name:"No"},{name:"Yes"}] };
     OPTION_DEFS['刷新僵尸的类别'] = { type: "checkbox", cases: [{name:"霹雳舞僵尸"}] };
+
+        // ===== 球果相关定义 =====
+    OPTION_DEFS['frame_wj_custom_球果切换形态'] = {
+        type: 'switch',
+        cases: [
+            { name: 'No' },
+            { name: 'Yes', option: ['frame_wj_custom_球果位置'] }
+        ]
+    };
+    OPTION_DEFS['frame_wj_custom_球果位置'] = {
+        type: 'select',
+        cases: [
+            { name: '恐龙形态' },
+            { name: '幽灵马形态' },
+            { name: '水母形态' }
+        ]
+    };
+    OPTION_DEFS['frame_球果切换形态'] = {
+        type: 'switch',
+        cases: [
+            { name: 'No' },
+            { name: 'Yes', option: ['frame_球果位置'] }
+        ]
+    };
+    OPTION_DEFS['frame_球果位置'] = {
+        type: 'select',
+        cases: [
+            { name: '恐龙形态' },
+            { name: '幽灵马形态' },
+            { name: '水母形态' }
+        ]
+    };
+
     // ===== 补充缺失的自定义布阵相关定义 =====
 // 1. 编队切换开关及输入
 OPTION_DEFS['frame_wj_custom_前期使用编队'] = {
@@ -815,7 +852,10 @@ function renderSlotRemarks() {
 // 4. 操作项定义
 // ============================================================
 const EARLY_CARDS = [];
-for (let i=1; i<=8; i++) EARLY_CARDS.push({ id: `card${i}`, label: `卡${i}`, type: 'card', phase: 'early', single: false, maxCount: 10 });
+for (let i=1; i<=8; i++) {
+    const maxCount = (i === 1 || i === 2) ? 25 : 10;
+    EARLY_CARDS.push({ id: `card${i}`, label: `卡${i}`, type: 'card', phase: 'early', single: false, maxCount: maxCount });
+}
 
 const EARLY_GUARD = [ { id: 'guard', label: '守卫菇', type: 'guard', phase: 'early', single: false, maxCount: 5 } ];
 const EARLY_SHOVEL_BEFORE = [ { id: 'shovel_before', label: '铲子(前5)', type: 'shovel', phase: 'early', single: false, maxCount: 5 } ];
@@ -826,13 +866,14 @@ const EARLY_BOSS_FEED = [ { id: 'bossfeed', label: 'Boss喂豆', type: 'bossfeed
 // 补植物操作项：卡槽2~8
 const LATE_PATCH = [];
 for (let slot=2; slot<=8; slot++) {
+    const maxCount = (slot === 2 || slot === 3) ? 15 : 5;
     LATE_PATCH.push({
         id: `patch_slot${slot}`,
         label: `补卡${slot}`,
         type: 'patch',
         phase: 'late',
         single: false,
-        maxCount: 5,
+        maxCount: maxCount,
         slot: slot
     });
 }
@@ -1379,59 +1420,116 @@ let rightCheckboxes = {};
 function renderRightPanelSwitches() {
     const container = document.getElementById('rightQuickControls');
     container.innerHTML = '';
-    RIGHT_SWITCHES.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'ctrl-item';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.id = 'right_' + item.optionName;
-        if (currentValues[item.optionName] === undefined) currentValues[item.optionName] = { index: 0 };
-        cb.checked = (currentValues[item.optionName]?.index === 1) || false;
-        let disabled = false;
-        if (item.optionName === '识别能量花卡槽位置') {
-            disabled = (currentValues['是否抛花']?.index !== 1);
-        } else if (item.optionName === '识别魔甘卡槽位置') {
-            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
-        } else if (item.optionName === '使用三叶草') {
-            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
-        } else if (item.optionName === '识别三叶草卡槽位置') {
-            disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1 || currentValues['使用三叶草']?.index !== 1);
-        }
-        cb.disabled = disabled;
-        cb.addEventListener('change', function() {
-            if (cb.disabled) return;
-            const newVal = this.checked ? 1 : 0;
-            applyDependency(item.optionName, this.checked);
-            currentValues[item.optionName] = { index: newVal };
-            const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'early';
-            renderQuickSwitches(currentTab);
-            updatePreview();
-            renderRightPanelSwitches();
-        });
-        const label = document.createElement('label');
-        label.htmlFor = cb.id;
-        label.textContent = item.label;
-        div.appendChild(cb);
-        div.appendChild(label);
-        div.setAttribute('data-tooltip-delay', '1000');
-        container.appendChild(div);
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
 
-        let tip = '';
-        if (item.optionName === '是否抛花') tip = '开启抛花功能';
-        else if (item.optionName === '是否魔甘收尾(牢玩家专属)') tip = '开启魔甘收尾（小关喂豆将失效）';
-        else if (item.optionName === '小关是否加速') tip = '小关自动加速';
-        else if (item.optionName === 'fw_boss关是否加速') tip = 'Boss关自动加速';
-        else if (item.optionName === 'fw_boss_补给智能选取') tip = '智能选取补给';
-        else if (item.optionName === 'fw_boss_是否开相机神器') tip = 'Boss关开启相机神器';
-        else if (item.optionName === '使用三叶草') tip = '魔甘时使用三叶草';
-        else if (item.optionName === '识别魔甘卡槽位置') tip = '自动识别魔甘卡槽';
-        else if (item.optionName === '识别三叶草卡槽位置') tip = '自动识别三叶草卡槽';
-        else if (item.optionName === '识别能量花卡槽位置') tip = '自动识别能量花卡槽';
-        else tip = `开关: ${item.label}`;
-        div.setAttribute('data-tooltip', tip);
-        enableTooltip(div);
-        rightCheckboxes[item.optionName] = cb;
-    });
+    // 常规开关只在后期显示
+    if (currentTab === 'late') {
+        RIGHT_SWITCHES.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'ctrl-item';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.id = 'right_' + item.optionName;
+            if (currentValues[item.optionName] === undefined) currentValues[item.optionName] = { index: 0 };
+            cb.checked = (currentValues[item.optionName]?.index === 1) || false;
+            let disabled = false;
+            if (item.optionName === '识别能量花卡槽位置') {
+                disabled = (currentValues['是否抛花']?.index !== 1);
+            } else if (item.optionName === '识别魔甘卡槽位置') {
+                disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+            } else if (item.optionName === '使用三叶草') {
+                disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1);
+            } else if (item.optionName === '识别三叶草卡槽位置') {
+                disabled = (currentValues['是否魔甘收尾(牢玩家专属)']?.index !== 1 || currentValues['使用三叶草']?.index !== 1);
+            }
+            cb.disabled = disabled;
+            cb.addEventListener('change', function() {
+                if (cb.disabled) return;
+                const newVal = this.checked ? 1 : 0;
+                applyDependency(item.optionName, this.checked);
+                currentValues[item.optionName] = { index: newVal };
+                const currentTab2 = document.querySelector('.tab.active')?.dataset.tab || 'early';
+                renderQuickSwitches(currentTab2);
+                updatePreview();
+                renderRightPanelSwitches();
+            });
+            const label = document.createElement('label');
+            label.htmlFor = cb.id;
+            label.textContent = item.label;
+            div.appendChild(cb);
+            div.appendChild(label);
+            div.setAttribute('data-tooltip-delay', '1000');
+            container.appendChild(div);
+
+            let tip = '';
+            if (item.optionName === '是否抛花') tip = '开启抛花功能';
+            else if (item.optionName === '是否魔甘收尾(牢玩家专属)') tip = '开启魔甘收尾（小关喂豆将失效）';
+            else if (item.optionName === '小关是否加速') tip = '小关自动加速';
+            else if (item.optionName === 'fw_boss关是否加速') tip = 'Boss关自动加速';
+            else if (item.optionName === 'fw_boss_补给智能选取') tip = '智能选取补给';
+            else if (item.optionName === 'fw_boss_是否开相机神器') tip = 'Boss关开启相机神器';
+            else if (item.optionName === '使用三叶草') tip = '魔甘时使用三叶草';
+            else if (item.optionName === '识别魔甘卡槽位置') tip = '自动识别魔甘卡槽';
+            else if (item.optionName === '识别三叶草卡槽位置') tip = '自动识别三叶草卡槽';
+            else if (item.optionName === '识别能量花卡槽位置') tip = '自动识别能量花卡槽';
+            else tip = `开关: ${item.label}`;
+            div.setAttribute('data-tooltip', tip);
+            enableTooltip(div);
+            rightCheckboxes[item.optionName] = cb;
+        });
+    }
+
+    // 球果切换形态控件（只在前期显示）
+    if (currentTab === 'early') {
+        const ballDiv = document.createElement('div');
+        ballDiv.className = 'ctrl-item';
+        const ballCb = document.createElement('input');
+        ballCb.type = 'checkbox';
+        ballCb.id = 'right_ball_switch';
+        ballCb.checked = (currentValues['frame_wj_custom_球果切换形态']?.index === 1);
+        ballCb.addEventListener('change', function() {
+            const checked = this.checked;
+            currentValues['frame_wj_custom_球果切换形态'] = { index: checked ? 1 : 0 };
+            updatePreview();
+        });
+        const ballLabel = document.createElement('label');
+        ballLabel.htmlFor = ballCb.id;
+        ballLabel.textContent = '球果切换';
+        ballDiv.appendChild(ballCb);
+        ballDiv.appendChild(ballLabel);
+
+        if (currentValues['frame_wj_custom_球果切换形态']?.index === 1) {
+            const radioContainer = document.createElement('span');
+            radioContainer.style.display = 'inline-flex';
+            radioContainer.style.gap = '6px';
+            radioContainer.style.marginLeft = '8px';
+            const cases = OPTION_DEFS['frame_wj_custom_球果位置']?.cases || [];
+            cases.forEach((c, idx) => {
+                const radioLabel = document.createElement('label');
+                radioLabel.style.fontSize = '12px';
+                radioLabel.style.display = 'flex';
+                radioLabel.style.alignItems = 'center';
+                radioLabel.style.gap = '2px';
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'right_ball_form';
+                radio.value = idx;
+                radio.checked = (currentValues['frame_wj_custom_球果位置']?.index === idx);
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        currentValues['frame_wj_custom_球果位置'] = { index: parseInt(this.value) };
+                        updatePreview();
+                    }
+                });
+                radioLabel.appendChild(radio);
+                radioLabel.appendChild(document.createTextNode(c.name || c.label || '选项'));
+                radioContainer.appendChild(radioLabel);
+            });
+            ballDiv.appendChild(radioContainer);
+        }
+
+        container.appendChild(ballDiv);
+    }
 }
 
 function updateRightPanelSwitches() {
@@ -1645,6 +1743,7 @@ function initTabs() {
             Object.keys(contents).forEach(key => { contents[key].classList.toggle('active', key === target); });
             renderOps(target);
             renderQuickSwitches(target);
+            updateRightPanelSwitches();   // 新增：刷新右侧控制区（包括球果控件）
             clearSelected();
             updateSelectedUI();
             setTimeout(() => resetKeyboardNavigation(), 50);
@@ -1907,8 +2006,9 @@ function buildFullInstance() {
     // ===== 3. 重置所有棋盘驱动的开关 =====
     for (let s = 1; s <= 8; s++) {
         const p = `卡${s}`;
+        const maxTimes = (s === 1 || s === 2) ? 25 : 10;
         currentValues[`${p}种植`] = { index: 0 };
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= maxTimes; i++) {
             currentValues[`${p}种第${i}次`] = { index: 0 };
             currentValues[`${p}种第${i}次坐标`] = { data: {} };
         }
@@ -1928,7 +2028,8 @@ function buildFullInstance() {
     for (let slot = 2; slot <= 8; slot++) {
         currentValues[`frame_卡槽${slot}_补植物`] = { index: 0 };
         const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
-        for (let pos = 1; pos <= 5; pos++) {
+        const maxPos = (slot === 2 || slot === 3) ? 15 : 5;
+        for (let pos = 1; pos <= maxPos; pos++) {
             const name = `${childPrefix}${pos}`;
             currentValues[name] = { index: 0 };
             currentValues[`${name}坐标`] = { data: {} };
@@ -1971,7 +2072,8 @@ function buildFullInstance() {
     for (let s = 1; s <= 8; s++) {
         const id = `card${s}`;
         const prefix = `卡${s}`;
-        const positions = rawOps.filter(op => op.id === id).slice(0, 10);
+        const maxTimes = (s === 1 || s === 2) ? 25 : 10;
+        const positions = rawOps.filter(op => op.id === id).slice(0, maxTimes);
         if (positions.length > 0) {
             currentValues[`${prefix}种植`] = { index: 1 };
             positions.forEach((op, idx) => {
@@ -2035,12 +2137,13 @@ function buildFullInstance() {
         });
         for (const [slot, ops] of Object.entries(grouped)) {
             const slotNum = parseInt(slot);
+            const maxPos = (slotNum === 2 || slotNum === 3) ? 15 : 5;
             const switchName = `frame_卡槽${slotNum}_补植物`;
             currentValues[switchName] = { index: 1 };
             const childPrefix = (slotNum >= 7) ? `frame_卡槽${slotNum}_` : `卡槽${slotNum}_`;
             ops.forEach(op => {
                 const pos = op.slotPos;
-                if (pos >= 1 && pos <= 5) {
+                if (pos >= 1 && pos <= maxPos) {
                     const name = `${childPrefix}${pos}`;
                     currentValues[name] = { index: 1 };
                     currentValues[`${name}坐标`] = { data: { "列": String(op.col), "行": String(op.row) } };
@@ -2489,8 +2592,9 @@ function rebuildBoardsFromValues() {
     // 卡槽种植（前期）
     for (let s = 1; s <= 8; s++) {
         const prefix = `卡${s}`;
+        const maxTimes = (s === 1 || s === 2) ? 25 : 10;
         if (currentValues[`${prefix}种植`]?.index === 1) {
-            for (let i = 1; i <= 10; i++) {
+            for (let i = 1; i <= maxTimes; i++) {
                 const coord = currentValues[`${prefix}种第${i}次坐标`]?.data;
                 if (coord && coord['列'] && coord['行']) {
                     const col = parseInt(coord['列']);
@@ -2552,7 +2656,8 @@ function rebuildBoardsFromValues() {
             const switchName = `frame_卡槽${slot}_补植物`;
             if (currentValues[switchName]?.index === 1) {
                 const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
-                for (let pos = 1; pos <= 5; pos++) {
+                const maxPos = (slot === 2 || slot === 3) ? 15 : 5;
+                for (let pos = 1; pos <= maxPos; pos++) {
                     const coord = currentValues[`${childPrefix}${pos}坐标`]?.data;
                     if (coord && coord['列'] && coord['行']) {
                         const col = parseInt(coord['列']);
