@@ -2524,8 +2524,12 @@ function importFromJSONText(jsonText) {
     document.getElementById('controllerName').value = data.CurrentControllerName || '';
     document.getElementById('taskEntry').value = (data.TaskItems?.[0]?.entry) || '';
 
-    // 查找无尽模式的 option 树
-    const optionTree = data.TaskItems?.[0]?.option?.[0];
+    // 查找无尽模式的 option 树：在 option 数组中找到 name 为 '无尽模式' 的节点
+    let optionTree = null;
+    const taskOptions = data.TaskItems?.[0]?.option;
+    if (Array.isArray(taskOptions)) {
+        optionTree = taskOptions.find(opt => opt && opt.name === '无尽模式') || null;
+    }
     if (optionTree) {
         function fillValues(node) {
             if (!node || !node.name) return;
@@ -2569,6 +2573,8 @@ function importFromJSONText(jsonText) {
     buildOptionUI(container, getRootOptionNames());
     updatePreview();
     document.getElementById('statusMsg').textContent = '📂 导入成功';
+    console.log('导入后的前期棋盘 boardEarly:', JSON.parse(JSON.stringify(boardEarly)));
+    console.log('导入后的后期棋盘 boardLate:', JSON.parse(JSON.stringify(boardLate)));
 }
 
 function rebuildBoardsFromValues() {
@@ -2595,6 +2601,8 @@ function rebuildBoardsFromValues() {
         const maxTimes = (s === 1 || s === 2) ? 25 : 10;
         if (currentValues[`${prefix}种植`]?.index === 1) {
             for (let i = 1; i <= maxTimes; i++) {
+                // 只导入真正开启的种植次数
+                if (currentValues[`${prefix}种第${i}次`]?.index !== 1) continue;
                 const coord = currentValues[`${prefix}种第${i}次坐标`]?.data;
                 if (coord && coord['列'] && coord['行']) {
                     const col = parseInt(coord['列']);
@@ -2658,7 +2666,10 @@ function rebuildBoardsFromValues() {
                 const childPrefix = (slot >= 7) ? `frame_卡槽${slot}_` : `卡槽${slot}_`;
                 const maxPos = (slot === 2 || slot === 3) ? 15 : 5;
                 for (let pos = 1; pos <= maxPos; pos++) {
-                    const coord = currentValues[`${childPrefix}${pos}坐标`]?.data;
+                    const name = `${childPrefix}${pos}`;
+                    // 只导入真正开启的补植物位置
+                    if (currentValues[name]?.index !== 1) continue;
+                    const coord = currentValues[`${name}坐标`]?.data;
                     if (coord && coord['列'] && coord['行']) {
                         const col = parseInt(coord['列']);
                         const row = parseInt(coord['行']);
