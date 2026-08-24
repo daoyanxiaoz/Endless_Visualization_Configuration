@@ -270,6 +270,23 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
     </div>
 </div>
 
+<!-- 导出备注询问模态框 -->
+<div id="exportNoteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:10px; max-width:400px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+        <div style="font-size:16px; font-weight:600; margin-bottom:12px;">是否导出卡槽备注？</div>
+        <div style="margin-bottom:16px; font-size:14px;">
+            <label>
+                <input type="checkbox" id="exportNoteNoPrompt" style="width:16px; height:16px; vertical-align:middle;">
+                刷新网页前不再提示
+            </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button id="exportNoteYes" class="btn btn-primary">是</button>
+            <button id="exportNoteNo" class="btn">否</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ============================================================
 // 1. OPTION_DEFS（完整定义）
@@ -282,7 +299,7 @@ if (typeof OPTION_DEFS === 'undefined') {
                 { name: "预设模式", option: ["当期无尽模式"] },
                 { name: "无尽通用框架", option: [
                     "当期无尽模式", "无尽全自动循环", "小关是否喂豆", "是否抛花",
-                    "fw_boss关是否需要喂豆", "从boss关选卡界面开启", "是否需要补植物",
+                    "fw_boss关是否需要喂豆", "是否需要补植物",
                     "小关是否加速", "fw_boss关是否加速", "fw_boss_补给智能选取",
                     "fw_boss_是否开相机神器", "刷掉僵尸", "是否魔甘收尾(牢玩家专属)",
                     "自定义布阵"
@@ -294,7 +311,6 @@ if (typeof OPTION_DEFS === 'undefined') {
             cases: [
                 { name: "No" },
                 { name: "Yes", option: [
-                    "frame_wj_custom_从boss关选卡界面开始",
                     "frame_wj_custom_回到后期",
                     "frame_wj_custom_是否种守卫菇",
                     "frame_wj_custom_布完阵是否喂豆",
@@ -452,13 +468,11 @@ if (typeof OPTION_DEFS === 'undefined') {
             ]
         },
         "小关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
-        "从boss关选卡界面开启": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "fw_boss关是否加速": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "fw_boss_补给智能选取": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "fw_boss_是否开相机神器": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "刷掉僵尸": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "无尽全自动循环": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
-        "frame_wj_custom_从boss关选卡界面开始": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "frame_wj_custom_回到后期": { type: "input", inputs: [{name:"关卡",default:""}] },
         "frame_wj_custom_布完阵是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] },
         "frame_wj_custom_boss关是否喂豆": { type: "switch", cases: [{name:"No"},{name:"Yes"}] }
@@ -822,29 +836,69 @@ function observeNewElements() {
 // ============================================================
 // 3. 卡槽备注
 // ============================================================
-let slotRemarks = Array(8).fill('');
+let slotRemarksEarly = Array(8).fill('');
+let slotRemarksLate = Array(7).fill(''); // 补卡2~补卡8
 function renderSlotRemarks() {
     const container = document.getElementById('slotRemarks');
     container.innerHTML = '';
-    for (let i=0; i<8; i++) {
-        const div = document.createElement('div');
-        div.className = 'slot-remark';
-        const num = document.createElement('span');
-        num.className = 'num';
-        num.textContent = `卡${i+1}`;
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.placeholder = '备注';
-        inp.value = slotRemarks[i] || '';
-        inp.setAttribute('data-tooltip', `为卡槽${i+1}添加备注，将显示在对应卡槽操作项旁`);
-        inp.addEventListener('input', function() {
-            slotRemarks[i] = this.value.trim();
-            updatePreview();
-        });
-        div.appendChild(num);
-        div.appendChild(inp);
-        container.appendChild(div);
-        enableTooltip(inp);
+
+    const currentTab = document.querySelector('.tab.active')?.dataset.tab;
+
+    if (currentTab === 'early') {
+        // 前期卡槽备注
+        const title = document.createElement('div');
+        title.style.cssText = 'font-weight:600; font-size:12px; margin-top:6px; margin-bottom:4px;';
+        title.textContent = '前期卡槽';
+        container.appendChild(title);
+
+        for (let i=0; i<8; i++) {
+            const div = document.createElement('div');
+            div.className = 'slot-remark';
+            const num = document.createElement('span');
+            num.className = 'num';
+            num.textContent = `卡${i+1}`;
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.placeholder = '备注';
+            inp.value = slotRemarksEarly[i] || '';
+            inp.setAttribute('data-tooltip', `为前期卡槽${i+1}添加备注`);
+            inp.addEventListener('input', function() {
+                slotRemarksEarly[i] = this.value.trim();
+                updatePreview();
+            });
+            div.appendChild(num);
+            div.appendChild(inp);
+            container.appendChild(div);
+            enableTooltip(inp);
+        }
+    } else if (currentTab === 'late') {
+        // 后期补卡备注
+        const title = document.createElement('div');
+        title.style.cssText = 'font-weight:600; font-size:12px; margin-top:6px; margin-bottom:4px;';
+        title.textContent = '后期补卡';
+        container.appendChild(title);
+
+        for (let i=0; i<7; i++) {
+            const slot = i + 2;
+            const div = document.createElement('div');
+            div.className = 'slot-remark';
+            const num = document.createElement('span');
+            num.className = 'num';
+            num.textContent = `补卡${slot}`;
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.placeholder = '备注';
+            inp.value = slotRemarksLate[i] || '';
+            inp.setAttribute('data-tooltip', `为后期补卡${slot}添加备注`);
+            inp.addEventListener('input', function() {
+                slotRemarksLate[i] = this.value.trim();
+                updatePreview();
+            });
+            div.appendChild(num);
+            div.appendChild(inp);
+            container.appendChild(div);
+            enableTooltip(inp);
+        }
     }
 }
 
@@ -1123,7 +1177,11 @@ function createOpElement(op) {
     let labelText = op.label;
     if (op.type === 'card') {
         const idx = parseInt(op.id.replace('card','')) - 1;
-        const remark = slotRemarks[idx] || '';
+        const remark = slotRemarksEarly[idx] || '';
+        labelText = op.label + (remark ? `(${remark})` : '');
+    } else if (op.type === 'patch') {
+        const idx = op.slot - 2; // patch_slot2 -> 0
+        const remark = slotRemarksLate[idx] || '';
         labelText = op.label + (remark ? `(${remark})` : '');
     }
     div.textContent = labelText;
@@ -1188,7 +1246,6 @@ const SWITCH_GROUPS = {
             { optionName: 'fw_boss关是否需要喂豆', label: 'Boss喂豆' },
             { optionName: '小关是否加速', label: '小关加速' },
             { optionName: 'fw_boss关是否加速', label: 'Boss加速' },
-            { optionName: '从boss关选卡界面开启', label: 'boss选卡开始' },
             { optionName: 'frame_wj_custom_是否种守卫菇', label: '守卫菇启用', default: 0 },
             { optionName: 'frame_wj_custom_是否使用铲子1', label: '守卫菇前铲子', default: 0 },
             { optionName: 'frame_wj_custom_是否使用铲子2', label: '守卫菇后铲子', default: 0 },
@@ -1286,7 +1343,6 @@ function renderQuickSwitches(phase) {
         else if (item.optionName === 'fw_boss关是否需要喂豆') tip = '开启后Boss关喂豆生效';
         else if (item.optionName === '小关是否加速') tip = '小关自动加速';
         else if (item.optionName === 'fw_boss关是否加速') tip = 'Boss关自动加速';
-        else if (item.optionName === '从boss关选卡界面开启') tip = '从Boss选卡界面开始脚本';
         else if (item.optionName === 'frame_wj_custom_是否种守卫菇') tip = '启用守卫菇种植';
         else if (item.optionName === 'frame_wj_custom_是否使用铲子1') tip = '启用前5次铲子';
         else if (item.optionName === 'frame_wj_custom_是否使用铲子2') tip = '启用后5次铲子';
@@ -1416,6 +1472,7 @@ const RIGHT_SWITCHES = [
 ];
 
 let rightCheckboxes = {};
+let exportNoteChoice = null; // 用于记住本次页面会话的选择（刷新后自动重置）
 
 function renderRightPanelSwitches() {
     const container = document.getElementById('rightQuickControls');
@@ -1743,6 +1800,7 @@ function initTabs() {
             Object.keys(contents).forEach(key => { contents[key].classList.toggle('active', key === target); });
             renderOps(target);
             renderQuickSwitches(target);
+            renderSlotRemarks();   // 新增：刷新卡槽备注面板
             updateRightPanelSwitches();   // 新增：刷新右侧控制区（包括球果控件）
             clearSelected();
             updateSelectedUI();
@@ -1969,7 +2027,7 @@ function buildFullInstance() {
         '小关是否加速', 'fw_boss关是否加速',
         'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
         '小关是否喂豆', 
-        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
+        '无尽全自动循环', '刷掉僵尸',
         '自定义布阵'
     ];
     const backup = {};
@@ -2054,7 +2112,6 @@ function buildFullInstance() {
     currentValues['飓风甘蓝1种植位置'] = { data: {} };
     currentValues['飓风甘蓝2种植位置'] = { data: {} };
     currentValues['魔甘失败后是否重开'] = { index: 0 };
-    currentValues['frame_wj_custom_从boss关选卡界面开始'] = { index: 0 };
     currentValues['frame_wj_custom_布完阵是否喂豆'] = { index: 0 };
     currentValues['frame_wj_custom_喂豆位置'] = { index: 0 };
     currentValues['frame_wj_custom_喂豆位置坐标'] = { data: {} };
@@ -2301,7 +2358,7 @@ currentValues['自定义布阵'] = shouldEnableCustom ? { index: 1 } : { index: 
         '是否抛花', '是否魔甘收尾(牢玩家专属)', '使用三叶草', '魔甘高级选项',
         '小关是否加速', 'fw_boss关是否加速',
         'fw_boss_补给智能选取', 'fw_boss_是否开相机神器',
-        '从boss关选卡界面开启', '无尽全自动循环', '刷掉僵尸',
+        '无尽全自动循环', '刷掉僵尸',
         
     ];
     userOnlyKeys.forEach(key => {
@@ -2524,11 +2581,18 @@ function importFromJSONText(jsonText) {
     document.getElementById('controllerName').value = data.CurrentControllerName || '';
     document.getElementById('taskEntry').value = (data.TaskItems?.[0]?.entry) || '';
 
-    // 查找无尽模式的 option 树：在 option 数组中找到 name 为 '无尽模式' 的节点
+    // 查找无尽模式的 option 树：遍历 TaskItems，找到包含 '无尽模式' 选项的任务项
     let optionTree = null;
-    const taskOptions = data.TaskItems?.[0]?.option;
-    if (Array.isArray(taskOptions)) {
-        optionTree = taskOptions.find(opt => opt && opt.name === '无尽模式') || null;
+    if (Array.isArray(data.TaskItems)) {
+        for (const task of data.TaskItems) {
+            if (task && Array.isArray(task.option)) {
+                const found = task.option.find(opt => opt && opt.name === '无尽模式');
+                if (found) {
+                    optionTree = found;
+                    break;
+                }
+            }
+        }
     }
     if (optionTree) {
         function fillValues(node) {
@@ -2557,6 +2621,12 @@ function importFromJSONText(jsonText) {
         }
         fillValues(optionTree);
     }
+
+    // 重置棋盘尺寸为默认 9×5，防止之前调整导致坐标映射错误
+    cols = 9;
+    rows = 5;
+    document.getElementById('colN').value = cols;
+    document.getElementById('rowN').value = rows;
 
     // 清空棋盘并重建
     initBoards();
@@ -2844,6 +2914,59 @@ function updatePreview() {
     buildOptionUI(container, getRootOptionNames());
 }
 
+function exportSlotRemarks() {
+    let content = '';
+    content += '前期卡槽备注：\n';
+    slotRemarksEarly.forEach((remark, idx) => {
+        content += `卡槽${idx+1}：${remark || '无'}\n`;
+    });
+    content += '\n后期补卡备注：\n';
+    slotRemarksLate.forEach((remark, idx) => {
+        const slot = idx + 2;
+        content += `补卡${slot}：${remark || '无'}\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '卡槽备注.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function showExportNoteModal(onYes, onNo) {
+    const modal = document.getElementById('exportNoteModal');
+    modal.style.display = 'flex';
+    const yesBtn = document.getElementById('exportNoteYes');
+    const noBtn = document.getElementById('exportNoteNo');
+    const noPromptCheck = document.getElementById('exportNoteNoPrompt');
+
+    const cleanup = () => {
+        modal.style.display = 'none';
+        yesBtn.onclick = null;
+        noBtn.onclick = null;
+    };
+
+    yesBtn.onclick = () => {
+        const noPrompt = noPromptCheck.checked;
+        if (noPrompt) {
+            exportNoteChoice = 'yes';
+        }
+        cleanup();
+        onYes();
+    };
+
+    noBtn.onclick = () => {
+        const noPrompt = noPromptCheck.checked;
+        if (noPrompt) {
+            exportNoteChoice = 'no';
+        }
+        cleanup();
+        onNo();
+    };
+}
+
 function exportJSON() {
     const data = buildFullInstance();
     const name = document.getElementById('fileName').value.trim() || data.InstanceName || "无尽配置";
@@ -2856,13 +2979,32 @@ function exportJSON() {
     a.click();
     URL.revokeObjectURL(url);
     document.getElementById('statusMsg').textContent = `✅ 已导出：${name}.json`;
+
+    // 检查是否需要导出备注
+    const savedChoice = exportNoteChoice;
+    if (savedChoice === 'yes') {
+        exportSlotRemarks();
+    } else if (savedChoice === 'no') {
+        // 不导出备注
+    } else {
+        showExportNoteModal(
+            () => {
+                exportSlotRemarks();
+                document.getElementById('statusMsg').textContent += '，备注已导出';
+            },
+            () => {
+                // 用户选择否，不导出备注
+            }
+        );
+    }
 }
 
 function loadDefaults() {
     undoStack = [];
     redoStack = [];
     initDefaultValues();
-    slotRemarks = Array(8).fill('');
+    slotRemarksEarly = Array(8).fill('');
+    slotRemarksLate = Array(7).fill('');
     renderSlotRemarks();
     initBoards();
     renderAllBoards();
@@ -3174,6 +3316,8 @@ window.onload = function() {
     enableTooltips('[data-tooltip]');
     observeNewElements();
 
+    slotRemarksEarly = Array(8).fill('');
+    slotRemarksLate = Array(7).fill('');
     renderSlotRemarks();
     initBoards();
     renderAllBoards();
