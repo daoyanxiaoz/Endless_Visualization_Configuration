@@ -965,6 +965,8 @@ let keyboardSelectedIndex = -1;
 // ===== 撤销/重做 =====
 let undoStack = [];
 let redoStack = [];
+// 全局放置序号：记录操作项被放置到棋盘的先后顺序，导出时据此排序
+let opSeqCounter = 1;
 
 function saveBoardState() {
     const copyEarly = JSON.parse(JSON.stringify(boardEarly));
@@ -1661,7 +1663,8 @@ function placeOp(board, opId, r, c) {
             return false;
         }
     }
-    const itemData = { id: opId, label: opItem.label, type: opItem.type, col: c+1, row: r+1, opData: opItem };
+    // ★ 记录全局放置序号，导出时据此还原用户实际放置顺序
+    const itemData = { id: opId, label: opItem.label, type: opItem.type, col: c+1, row: r+1, opData: opItem, seq: opSeqCounter++ };
     if (!opItem.single) {
         const used = getUsedPositions(board, opId);
         let pos = 1;
@@ -2053,13 +2056,18 @@ function buildFullInstance() {
                             board: board.name,
                             opData: item.opData || ALL_OPS.find(o => o.id === item.id),
                             slotPos: item.slotPos || null,
-                            label: item.label
+                            label: item.label,
+                            seq: (typeof item.seq === 'number') ? item.seq : 0   // ★ 放置先后序号
                         });
                     }
                 });
             }
         }
     });
+
+    // ★ 按放置先后顺序排序（而非棋盘扫描顺序），保证导出顺序与用户布置顺序一致
+    // Array.prototype.sort 在现代浏览器中是稳定的，旧数据没有 seq（默认 0）时保持原有相对顺序
+    rawOps.sort((a, b) => a.seq - b.seq);
 
     // ===== 3. 重置所有棋盘驱动的开关 =====
     for (let s = 1; s <= 8; s++) {
@@ -2630,6 +2638,7 @@ function importFromJSONText(jsonText) {
 
     // 清空棋盘并重建
     initBoards();
+    opSeqCounter = 1;   // ★ 重置全局放置序号，导入时按文件顺序重新编号
     rebuildBoardsFromValues();
 
     // 更新所有 UI
@@ -2652,7 +2661,8 @@ function rebuildBoardsFromValues() {
     function placeImportedOp(board, opId, col, row, slotPos) {
         const opItem = ALL_OPS.find(o => o.id === opId);
         if (!opItem) return;
-        const itemData = { id: opId, label: opItem.label, type: opItem.type, col, row, opData: opItem };
+        // ★ 导入时也按遍历顺序分配 seq，保证导入后的顺序与文件中的顺序一致
+        const itemData = { id: opId, label: opItem.label, type: opItem.type, col, row, opData: opItem, seq: opSeqCounter++ };
         if (!opItem.single && slotPos) {
             itemData.slotPos = slotPos;
             itemData.label = `${opItem.label}-${slotPos}`;
@@ -3007,6 +3017,7 @@ function loadDefaults() {
     slotRemarksLate = Array(7).fill('');
     renderSlotRemarks();
     initBoards();
+    opSeqCounter = 1;   // ★ 重置全局放置序号
     renderAllBoards();
     clearSelected();
     updateSelectedUI();
