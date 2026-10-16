@@ -135,6 +135,7 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
         <button class="btn" id="importBtn" data-tooltip="从 JSON 文件导入配置">📂 导入 JSON</button>
         <button class="btn" id="undoBtn" data-tooltip="'ctrl+z'撤销上一步棋盘操作">↩ 撤销</button>
         <button class="btn" id="redoBtn" data-tooltip="'ctrl+y'重做棋盘操作">↪ 重做</button>
+        <button class="btn" id="announcementBtn" data-tooltip="查看公告">📢 公告</button>
         <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
     </div>
 
@@ -283,6 +284,55 @@ select, input[type="text"], input[type="number"] { padding:3px 8px; border:1px s
         <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button id="exportNoteYes" class="btn btn-primary">是</button>
             <button id="exportNoteNo" class="btn">否</button>
+        </div>
+    </div>
+</div>
+
+<!-- 公告弹窗 -->
+<div id="announcementModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10001; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:10px; max-width:560px; width:92%; max-height:85vh; box-shadow:0 4px 12px rgba(0,0,0,0.3); display:flex; flex-direction:column;">
+        <div style="font-size:18px; font-weight:600; margin-bottom:10px;">📢 公告</div>
+        <div style="overflow-y:auto; font-size:13px; line-height:1.7; padding-right:6px; color:#333;">
+            <p style="margin-bottom:10px;">
+                <b>无尽通用框架已停止维护。</b>如果你更新到最新版本，欢迎来体验无尽模式：<b>作业集</b>功能！<br>
+                QQ 群号：<b style="color:#2d7aff;">1109764322</b>
+            </p>
+            <hr style="border:none; border-top:1px dashed #d0d7de; margin:10px 0;">
+            <p style="font-weight:600; margin-bottom:6px;">【测试公告】无尽挑战·作业集 v1.5.5-beta</p>
+            <p style="margin-bottom:6px;">
+                大家好，新的"无尽挑战-作业集"正在研发中，欢迎大家更新 v1.5.5-beta 参与测试体验。<br>
+                遇到 bug 请到 GitHub 提交 issue（<a href="https://github.com/Maa-Assistant-PVZ-The-best/MAAPVZ/issues" target="_blank" style="color:#2d7aff;">MAAPVZ/issues</a>）；群消息比较多，有时候不一定能及时看到，希望大家理解。
+            </p>
+            <p style="font-weight:600; margin:8px 0 4px;">🌱 本次主要特性：</p>
+            <ul style="margin:0 0 8px 20px;">
+                <li>支持多阵容表覆盖，理论上 149 关可以配置 149 套阵容</li>
+                <li>支持神器切换</li>
+                <li>无尽全自动循环</li>
+                <li>自动选卡（嫌自动选卡慢，可以切换为编队模式）</li>
+            </ul>
+            <p style="margin-bottom:6px;">
+                如果这个项目对你有帮助，欢迎给仓库点一个 Star ⭐，感谢支持！<br>
+                <a href="https://github.com/Maa-Assistant-PVZ-The-best/MAAPVZ" target="_blank" style="color:#2d7aff;">https://github.com/Maa-Assistant-PVZ-The-best/MAAPVZ</a>
+            </p>
+            <p style="font-weight:600; margin:8px 0 4px;">📖 使用说明：</p>
+            <ul style="margin:0 0 8px 20px;">
+                <li>新的无尽作业集还没有特别详细的教程，大家可以先自行摸索</li>
+                <li>连接模拟器后，点击"编辑作业集"，即可打开作业集的 HTML 工具</li>
+                <li>"远程作业集"暂不可用：开发者想先精进一下代码技术，所以这里只能先画个饼了</li>
+                <li>"使用本地作业集"：将使用你在 HTML 工具中配置、选中并保存的作业集。<b>注意：必须先保存</b>，自己改写的配置才会应用到作业集中</li>
+                <li>右侧列表可以展开查看链条规则，分为：
+                    <ul style="margin:2px 0 2px 16px;">
+                        <li><b>单次链</b>（开局使用一次）</li>
+                        <li><b>循环链</b>（一直循环执行的动作）</li>
+                        <li><b>收尾链</b>（最后一波执行的动作/循环链执行一定次数的动作）</li>
+                    </ul>
+                </li>
+                <li>插入左侧的植物以及格子列表时，可以右键或按 F 键选择当前动作所在的链条</li>
+                <li style="color:#dc2626;">图片资源需要参考测试群文件夹中的无尽重构，请一定要在正赛中截图！！！否则可能会导致识别不到！</li>
+            </ul>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+            <button id="announcementClose" class="btn btn-primary">我知道了</button>
         </div>
     </div>
 </div>
@@ -3415,6 +3465,37 @@ window.onload = function() {
     updatePreview();
     loadDefaults();
 };
+
+// ============================================================
+// 15. 公告弹窗
+// ============================================================
+// 修改公告内容时，更新此版本号，老用户打开时会重新弹出
+const ANNOUNCEMENT_VERSION = '20250115-notice-v1';
+
+function showAnnouncement() {
+    document.getElementById('announcementModal').style.display = 'flex';
+}
+
+function hideAnnouncement(markRead) {
+    document.getElementById('announcementModal').style.display = 'none';
+    if (markRead) {
+        try { localStorage.setItem('announcementRead', ANNOUNCEMENT_VERSION); } catch (e) {}
+    }
+}
+
+(function initAnnouncement() {
+    document.getElementById('announcementClose').addEventListener('click', function() {
+        hideAnnouncement(true);
+    });
+    // 工具栏"公告"按钮可随时重新查看
+    document.getElementById('announcementBtn').addEventListener('click', showAnnouncement);
+    // 首次打开（或公告更新后）自动弹出
+    let read = null;
+    try { read = localStorage.getItem('announcementRead'); } catch (e) {}
+    if (read !== ANNOUNCEMENT_VERSION) {
+        showAnnouncement();
+    }
+})();
 </script>
 </body>
 </html>
